@@ -382,7 +382,7 @@ function handleFile(type, input){
   const file = input.files[0];
   if(!file) return;
   const reader = new FileReader();
-  rreader.onload = e => {
+  reader.onload = e => {
     const rows = parseCSV(e.target.result);
     state[type] = rows;
 
