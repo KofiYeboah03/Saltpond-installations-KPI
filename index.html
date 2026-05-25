@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SNEDA Installation KPI Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#0a0e17;--surface:#111827;--surface2:#1a2235;--surface3:#1f2d45;
+  --accent:#ff6b35;--accent2:#0091ff;--accent3:#ffd166;--accent4:#a78bfa;
+  --text:#e8edf5;--text2:#8899bb;--text3:#4a5a7a;
+  --border:#1e2d4a;--danger:#ff4444;--warn:#ffaa00;--success:#22c55e;
+  --font-mono:'IBM Plex Mono',monospace;--font-sans:'IBM Plex Sans',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-height:100vh;font-size:14px}
+.app{display:flex;flex-direction:column;min-height:100vh}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100}
+.logo{font-family:var(--font-mono);font-weight:700;font-size:15px;color:var(--accent);letter-spacing:.08em}
+.logo span{color:var(--text2);font-weight:400}
+.header-status{margin-left:auto;display:flex;align-items:center;gap:12px;font-size:12px;color:var(--text2);font-family:var(--font-mono)}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--text3)}
+.status-dot.active{background:var(--accent);box-shadow:0 0 6px var(--accent)}
+.upload-section{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 24px}
+.upload-label{font-family:var(--font-mono);font-size:10px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+.upload-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;max-width:1200px;margin-bottom:12px}
+.upload-card{background:var(--surface2);border:1.5px dashed var(--border);border-radius:8px;padding:14px 16px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.upload-card:hover{border-color:var(--accent);background:var(--surface3)}
+.upload-card.loaded{border-style:solid;border-color:var(--accent);background:rgba(255,107,53,.06)}
+.upload-card.loaded-return{border-style:solid;border-color:var(--success);background:rgba(34,197,94,.05)}
+.upload-card label{cursor:pointer;display:block}
+.upload-card input[type=file]{position:absolute;opacity:0;width:100%;height:100%;top:0;left:0;cursor:pointer}
+.uc-type{font-family:var(--font-mono);font-size:10px;color:var(--accent);font-weight:700;letter-spacing:.1em;margin-bottom:4px}
+.uc-type.ret{color:var(--success)}
+.uc-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px}
+.uc-status{font-size:11px;color:var(--text3);font-family:var(--font-mono)}
+.uc-status.ok{color:var(--accent)}
+.uc-status.ok-ret{color:var(--success)}
+.tabs{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;gap:0;overflow-x:auto}
+.tab{padding:12px 20px;font-size:12px;font-family:var(--font-mono);font-weight:600;letter-spacing:.06em;color:var(--text3);border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;transition:all .2s;text-transform:uppercase}
+.tab:hover{color:var(--text2)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab.new-tab{color:var(--success)}
+.tab.new-tab.active{color:var(--success);border-bottom-color:var(--success)}
+.content{flex:1;padding:24px;overflow-x:auto}
+.no-data{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:260px;color:var(--text3);font-family:var(--font-mono);font-size:13px;gap:8px}
+.no-data b{font-size:15px;color:var(--text2)}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px}
+.card-label{font-size:10px;font-family:var(--font-mono);color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+.card-value{font-size:26px;font-family:var(--font-mono);font-weight:700;color:var(--accent)}
+.card-value.blue{color:var(--accent2)}
+.card-value.orange{color:var(--accent3)}
+.card-value.yellow{color:var(--accent4)}
+.card-value.green{color:var(--success)}
+.card-value.red{color:var(--danger)}
+.card-sub{font-size:11px;color:var(--text3);margin-top:3px}
+.card.accent-border{border-left:3px solid var(--accent)}
+.card.blue-border{border-left:3px solid var(--accent2)}
+.card.orange-border{border-left:3px solid var(--accent3)}
+.card.yellow-border{border-left:3px solid var(--accent4)}
+.card.green-border{border-left:3px solid var(--success)}
+.card.red-border{border-left:3px solid var(--danger)}
+
+.section-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;margin-top:6px}
+.section-title{font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text2)}
+.section-line{flex:1;height:1px;background:var(--border)}
+
+.controls{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px;align-items:center}
+select,input[type=month]{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:12px;font-family:var(--font-mono);outline:none;cursor:pointer}
+select:focus,input[type=month]:focus{border-color:var(--accent)}
+.btn{background:var(--surface2);border:1px solid var(--border);color:var(--text2);padding:8px 16px;border-radius:6px;font-size:12px;font-family:var(--font-mono);cursor:pointer;transition:all .2s}
+.btn:hover,.btn.active{background:var(--accent);color:#000;border-color:var(--accent);font-weight:700}
+.btn-dl{background:var(--surface2);border:1px solid var(--accent);color:var(--accent);padding:8px 16px;border-radius:6px;font-size:12px;font-family:var(--font-mono);cursor:pointer;transition:all .2s}
+.btn-dl:hover{background:var(--accent);color:#000}
+.btn-dl-green{background:var(--surface2);border:1px solid var(--success);color:var(--success);padding:8px 16px;border-radius:6px;font-size:12px;font-family:var(--font-mono);cursor:pointer;transition:all .2s}
+.btn-dl-green:hover{background:var(--success);color:#000}
+
+.table-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{background:var(--surface2);color:var(--text3);font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0}
+tbody tr{border-bottom:1px solid var(--border);transition:background .15s}
+tbody tr:hover{background:var(--surface2)}
+tbody td{padding:10px 14px;color:var(--text);vertical-align:middle}
+tbody td.mono{font-family:var(--font-mono);font-size:11px}
+tbody td.num{font-family:var(--font-mono);text-align:right}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-family:var(--font-mono);font-weight:700;letter-spacing:.05em}
+.badge-green{background:rgba(255,107,53,.15);color:var(--accent)}
+.badge-blue{background:rgba(0,145,255,.15);color:var(--accent2)}
+.badge-orange{background:rgba(255,107,53,.15);color:var(--accent3)}
+.badge-yellow{background:rgba(255,209,102,.15);color:var(--accent4)}
+.badge-red{background:rgba(255,68,68,.15);color:var(--danger)}
+.badge-emerald{background:rgba(34,197,94,.15);color:var(--success)}
+.badge-warn{background:rgba(255,170,0,.15);color:var(--warn)}
+
+.month-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:20px}
+.month-btn{background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer;transition:all .2s;text-align:center}
+.month-btn:hover{border-color:var(--text3)}
+.month-btn.active{border-color:var(--accent);background:rgba(255,107,53,.08)}
+.month-btn .mb-label{font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--text2);margin-bottom:4px}
+.month-btn .mb-total{font-family:var(--font-mono);font-size:18px;font-weight:700;color:var(--accent)}
+.month-btn .mb-sub{font-size:10px;color:var(--text3);margin-top:2px}
+
+.bar-chart{display:flex;flex-direction:column;gap:6px}
+.bar-row{display:flex;align-items:center;gap:10px}
+.bar-label{font-size:11px;font-family:var(--font-mono);color:var(--text2);width:160px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-track{flex:1;height:20px;background:var(--surface2);border-radius:4px;overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:4px;transition:width .4s}
+.bar-val{font-size:11px;font-family:var(--font-mono);color:var(--text2);width:50px;text-align:right;flex-shrink:0}
+
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.compare-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px}
+.compare-card h4{font-family:var(--font-mono);font-size:11px;color:var(--text3);margin-bottom:12px;letter-spacing:.08em;text-transform:uppercase}
+
+.table-container{max-height:400px;overflow-y:auto;border-radius:8px;border:1px solid var(--border)}
+.table-container table thead th{top:0;z-index:2}
+
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
+@media(max-width:700px){.two-col,.three-col{grid-template-columns:1fr}.upload-grid{grid-template-columns:1fr}.compare-grid{grid-template-columns:1fr}}
+.info-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:16px;font-size:12px;color:var(--text2);font-family:var(--font-mono)}
+.info-box b{color:var(--text)}
+.info-box.warn-box{border-color:var(--warn);background:rgba(255,170,0,.05)}
+.info-box.success-box{border-color:var(--success);background:rgba(34,197,94,.05)}
+.pct-bar{height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;margin-top:4px}
+.pct-bar-fill{height:100%;border-radius:4px;background:var(--accent);transition:width .5s}
+.pct-bar-fill.green{background:var(--success)}
+.pct-bar-fill.red{background:var(--danger)}
+
+/* Reconciliation specific */
+.recon-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px}
+.recon-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;text-align:center}
+.recon-card .rc-val{font-family:var(--font-mono);font-size:28px;font-weight:700;margin:4px 0}
+.recon-card .rc-label{font-size:10px;font-family:var(--font-mono);color:var(--text3);letter-spacing:.08em;text-transform:uppercase}
+
+.sneda-bg{position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:0;overflow:hidden}
+.sneda-text{position:absolute;font-family:var(--font-mono);font-weight:700;font-size:clamp(80px,18vw,240px);letter-spacing:-0.02em;color:transparent;-webkit-text-stroke:1.5px rgba(255,107,53,.09);white-space:nowrap;user-select:none;animation:snedaDrift 28s ease-in-out infinite alternate;transform-origin:center center}
+@keyframes snedaDrift{0%{top:20%;left:-5%;transform:rotate(-8deg) scale(1);opacity:.9}25%{top:35%;left:15%;transform:rotate(-3deg) scale(1.04)}50%{top:50%;left:30%;transform:rotate(4deg) scale(.97)}75%{top:30%;left:55%;transform:rotate(-5deg) scale(1.02)}100%{top:15%;left:40%;transform:rotate(8deg) scale(1.06);opacity:1}}
+.app{position:relative;z-index:1}
+
+/* contractor filter pills */
+.filter-pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.filter-pill{background:var(--surface2);border:1px solid var(--border);color:var(--text3);padding:4px 12px;border-radius:20px;font-size:11px;font-family:var(--font-mono);cursor:pointer;transition:all .2s}
+.filter-pill:hover{border-color:var(--text3);color:var(--text2)}
+.filter-pill.active{background:rgba(255,107,53,.15);border-color:var(--accent);color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="sneda-bg" aria-hidden="true"><div class="sneda-text">SNEDA</div></div>
+<div class="app">
+<header>
+  <div class="logo">SNEDA <span>/ KPI DASHBOARD</span></div>
+  <div class="header-status">
+    <div class="status-dot" id="status-dot"></div>
+    <span id="status-text">NO FILES LOADED</span>
+  </div>
+</header>
+
+<div class="upload-section">
+  <div class="upload-label">▶ Core Service Data</div>
+  <div class="upload-grid">
+    <div class="upload-card" id="uc-replacement">
+      <input type="file" accept=".csv" id="file-replacement" onchange="handleFile('replacement',this)"/>
+      <div class="uc-type">SERVICE TYPE 01</div>
+      <div class="uc-name">Replacement Orders</div>
+      <div class="uc-status" id="uc-replacement-status">Click to upload CSV</div>
+    </div>
+    <div class="upload-card" id="uc-regularization">
+      <input type="file" accept=".csv" id="file-regularization" onchange="handleFile('regularization',this)"/>
+      <div class="uc-type">SERVICE TYPE 02</div>
+      <div class="uc-name">Regularization Orders</div>
+      <div class="uc-status" id="uc-regularization-status">Click to upload CSV</div>
+    </div>
+    <div class="upload-card" id="uc-installation">
+      <input type="file" accept=".csv" id="file-installation" onchange="handleFile('installation',this)"/>
+      <div class="uc-type">SERVICE TYPE 03</div>
+      <div class="uc-name">New Service (Installation)</div>
+      <div class="uc-status" id="uc-installation-status">Click to upload CSV</div>
+    </div>
+  </div>
+  <div class="upload-label" style="margin-top:10px">▶ Old Meters Returned (for Reconciliation)</div>
+  <div class="upload-grid">
+    <div class="upload-card" id="uc-ret-replacement">
+      <input type="file" accept=".csv" id="file-ret-replacement" onchange="handleFile('retReplacement',this)"/>
+      <div class="uc-type ret">RETURNED — TYPE 01</div>
+      <div class="uc-name">Returned Replacement Meters</div>
+      <div class="uc-status" id="uc-ret-replacement-status">Click to upload CSV</div>
+    </div>
+    <div class="upload-card" id="uc-ret-regularization">
+      <input type="file" accept=".csv" id="file-ret-regularization" onchange="handleFile('retRegularization',this)"/>
+      <div class="uc-type ret">RETURNED — TYPE 02</div>
+      <div class="uc-name">Returned Regularization Meters</div>
+      <div class="uc-status" id="uc-ret-regularization-status">Click to upload CSV</div>
+    </div>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('monthly')">Monthly Overview</div>
+  <div class="tab" onclick="switchTab('compare')">Month Comparison</div>
+  <div class="tab" onclick="switchTab('contractors')">Contractor Performance</div>
+  <div class="tab" onclick="switchTab('phase')">Meter Phase Analysis</div>
+  <div class="tab" onclick="switchTab('summary')">Summary &amp; Targets</div>
+  <div class="tab" onclick="switchTab('mms')">MMS Analysis</div>
+  <div class="tab new-tab" onclick="switchTab('returned')">Old Meters Returned</div>
+  <div class="tab" onclick="switchTab('export')">Export</div>
+</div>
+
+<div class="content" id="content"></div>
+</div>
+
+<script>
+// ============================================================
+// SUPABASE CONFIG — replace with your project values
+// ============================================================
+const SUPABASE_URL = 'https://slxfmharltljcwrmdbgx.supabase.co/rest/v1/';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNseGZtaGFybHRsamN3cm1kYmd4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MTk0NDYsImV4cCI6MjA5NTI5NTQ0Nn0.bW2RjLdzgBKMWib5RYcbTw1bQJERuCzcWYRBgTv869M';
+
+async function upsertToSupabase(table, rows) {
+  if (!rows || !rows.length) return;
+  const payload = rows.map(r => {
+    const spn = (r['SERVICE POINT NUMBER'] || r['Service Point Number'] || '').trim();
+    const rawDate = r['DATE APPROVED'] || r['Date Approved'] || r['DATE RETURNED'] || '';
+    const parsedDate = (() => {
+      const m = rawDate.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+      if (!m) return null;
+      return `${m[3]}-${m[2]}-${m[1]}`;
+    })();
+
+    if (table === 'installation_orders') {
+      return {
+        service_order_code:        r['SERVICE ORDER CODE'] || '',
+        service_point_number:      spn,
+        contractor_code:           (r['CONTRACTOR CODE'] || '').trim(),
+        customer_name:             r['CUSTOMER NAME'] || '',
+        customer_phone:            r['CUSTOMER PHONE'] || '',
+        meter_phase:               r['METER PHASE'] || '',
+        model_type:                (r['Model Type'] || '').trim(),
+        cosem_logical_device_name: r['COSEM Logical Device Name'] || '',
+        installation_type:         r['INSTALLATION TYPE'] || '',
+        district_code:             r['DISTRICT CODE'] || '',
+        date_approved:             parsedDate,
+        raw_date_approved:         rawDate,
+      };
+    }
+
+    if (table === 'returned_replacement_meters' || table === 'returned_regularization_meters') {
+      return {
+        service_point_number: spn,
+        contractor_code:      (r['CONTRACTOR CODE'] || '').trim(),
+        customer_name:        r['CUSTOMER NAME'] || '',
+        old_meter_number:     r['OLD METER NUMBER'] || r['Old Meter Number'] || r['OLD METER NO'] || '',
+        district_code:        r['DISTRICT CODE'] || '',
+        date_returned:        parsedDate,
+        raw_date_returned:    rawDate,
+      };
+    }
+
+    // replacement_orders or regularization_orders
+    return {
+      service_order_code:        r['SERVICE ORDER CODE'] || '',
+      service_point_number:      spn,
+      contractor_code:           (r['CONTRACTOR CODE'] || '').trim(),
+      customer_name:             r['CUSTOMER NAME'] || '',
+      customer_phone:            r['CUSTOMER PHONE'] || '',
+      meter_phase:               r['METER PHASE'] || '',
+      model_type:                (r['Model Type'] || '').trim(),
+      old_meter_number:          r['OLD METER NUMBER'] || r['Old Meter Number'] || r['OLD METER NO'] || '',
+      cosem_logical_device_name: r['COSEM Logical Device Name'] || '',
+      fault_type:                r['FAULT TYPE'] || '',
+      installation_type:         r['INSTALLATION TYPE'] || '',
+      district_code:             r['DISTRICT CODE'] || '',
+      date_approved:             parsedDate,
+      raw_date_approved:         rawDate,
+    };
+  });
+
+  // Supabase REST upsert in batches of 500
+  const BATCH = 500;
+  for (let i = 0; i < payload.length; i += BATCH) {
+    const batch = payload.slice(i, i + BATCH);
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates',
+      },
+      body: JSON.stringify(batch),
+    });
+    if (!res.ok) {
+      const err = await res.text();
+      console.error(`Supabase upload error (${table} batch ${i}):`, err);
+    }
+  }
+}
+
+// ============================================================
+// DATA STORE
+// ============================================================
+const CONTRACTORS = {
+  SP0026:'ANTHONY YAW ADJEI',SP0025:'CHRISTOPHER SAM',SP0024:'ROSINA NIMAKO',
+  SP0023:'NAKOBUA VENTURES',SP0022:"JACKSON'S ELECTRICAL CONTRACT WORKS",
+  SP0021:'YEGBE ENGINEERING',SP0020:'WESTPOOL COMPANY LIMITED',
+  SP0019:'OTUB ENGINEERING',SP0018:'MEGAGIY ENTERPRISE',
+  SP0017:'MK CABLE ADVANCE',
+  SP0016:'OHEMEN ELECTRICAL AND ENGINEERING COMPANY LTD',
+  SP0015:'SIR CHARLES DOUGHAN COMPANY',SP0014:'WEST VIDAM VENTURES',
+  SP0013:'NAADEEABLE VENTURES',SP0012:'PRESTIGE ELECTRICAL ENGINEERING LIMITED',
+  SP0011:'HIMK ENGINEERING ENTERPRISE',SP0010:'NAADEEABLE VENTURES',
+  SP0009:'ANDYMARK ELECTRICALS',
+  SP0008:'BERTH ELECTRICAL ENGINEERING LIMITED',
+  SP0007:'IONIC ELECTRICALS',SP0006:'KOSMEN ELECTRICAL WORKS',
+  SP0005:'MINYA ELECTRICAL & ENGINEERING VENTURES',
+  SP0004:'SIMVID FREEDOM ELECTRICAL AND CONTRUCTION WORK',
+  SP0003:'SIMVID FREEDOM ELECTRICAL AND CONTRUCTION WORK'
+};
+
+const state = {replacement:null,regularization:null,installation:null,retReplacement:null,retRegularization:null};
+let currentTab = 'monthly';
+
+const MONTHS = [];
+for(let y=2025;y<=2026;y++){
+  let em = y===2026?(new Date().getMonth()+1):12;
+  for(let m=1;m<=em;m++) MONTHS.push({y,m,key:`${y}-${String(m).padStart(2,'0')}`});
+}
+
+// ============================================================
+// CSV PARSE
+// ============================================================
+function parseCSV(text){
+  const lines = text.split('\n');
+  if(lines.length<2) return [];
+  function splitLine(line){
+    const cols=[];let cur='',inQ=false;
+    for(let i=0;i<line.length;i++){
+      const c=line[i];
+      if(c==='"') inQ=!inQ;
+      else if(c===','&&!inQ){cols.push(cur.trim());cur='';}
+      else cur+=c;
+    }
+    cols.push(cur.trim());
+    return cols;
+  }
+  const headers = splitLine(lines[0]).map(h=>h.replace(/^"|"$/g,'').trim());
+  const rows=[];
+  for(let i=1;i<lines.length;i++){
+    if(!lines[i].trim()) continue;
+    const vals = splitLine(lines[i]);
+    const obj={};
+    headers.forEach((h,idx)=>{obj[h]=(vals[idx]||'').replace(/^"|"$/g,'').trim();});
+    rows.push(obj);
+  }
+  return rows;
+}
+
+function parseDate(str){
+  if(!str) return null;
+  const m = str.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  if(!m) return null;
+  return new Date(+m[3],+m[2]-1,+m[1]);
+}
+
+function getMonthKey(dateStr){
+  const d=parseDate(dateStr);
+  if(!d) return null;
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+
+function getMonthLabel(key){
+  const [y,m]=key.split('-');
+  return new Date(+y,+m-1,1).toLocaleString('default',{month:'short',year:'numeric'}).toUpperCase();
+}
+
+// ============================================================
+// FILE HANDLER
+// ============================================================
+function handleFile(type, input){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  rreader.onload = e => {
+    const rows = parseCSV(e.target.result);
+    state[type] = rows;
+
+    // Map state key → Supabase table name
+    const TABLE_MAP = {
+      replacement:      'replacement_orders',
+      regularization:   'regularization_orders',
+      installation:     'installation_orders',
+      retReplacement:   'returned_replacement_meters',
+      retRegularization:'returned_regularization_meters',
+    };
+    const tableName = TABLE_MAP[type];
+    if (tableName) {
+      upsertToSupabase(tableName, rows)
+        .then(() => console.log(`✓ Uploaded ${rows.length} rows → ${tableName}`))
+        .catch(err => console.error('Supabase error:', err));
+    }
+    const isRet = type.startsWith('ret');
+    const cardId = type==='retReplacement'?'ret-replacement':type==='retRegularization'?'ret-regularization':type;
+    const card = document.getElementById(`uc-${cardId}`);
+    if(card){
+      card.classList.add(isRet?'loaded-return':'loaded');
+      const statusEl = document.getElementById(`uc-${cardId}-status`);
+      if(statusEl){
+        statusEl.textContent = `${rows.length} records loaded`;
+        statusEl.className = 'uc-status '+(isRet?'ok-ret':'ok');
+      }
+    }
+    updateHeader();
+    renderTab(currentTab);
+  };
+  reader.readAsText(file);
+}
+
+function updateHeader(){
+  const loaded = [state.replacement,state.regularization,state.installation].filter(Boolean).length;
+  const retLoaded = [state.retReplacement,state.retRegularization].filter(Boolean).length;
+  const dot = document.getElementById('status-dot');
+  const txt = document.getElementById('status-text');
+  let msg = `${loaded}/3 CORE`;
+  if(retLoaded>0) msg += ` | ${retLoaded}/2 RETURNED`;
+  if(loaded===3){dot.classList.add('active');}else{dot.classList.remove('active');}
+  txt.textContent = loaded===3&&retLoaded===2?'ALL FILES LOADED':msg;
+}
+
+// ============================================================
+// TAB SWITCH
+// ============================================================
+function switchTab(tab){
+  currentTab=tab;
+  document.querySelectorAll('.tab').forEach(el=>{
+    const tabs=['monthly','compare','contractors','phase','summary','mms','returned','export'];
+    const t=tabs.find((_,i)=>el===document.querySelectorAll('.tab')[i]);
+    el.classList.toggle('active',el.getAttribute('onclick')===`switchTab('${tab}')`);
+  });
+  renderTab(tab);
+}
+
+function renderTab(tab){
+  const el = document.getElementById('content');
+  if(!state.replacement&&!state.regularization&&!state.installation){
+    el.innerHTML=`<div class="no-data"><b>NO DATA LOADED</b>Upload CSV files to begin analysis</div>`;
+    return;
+  }
+  if(tab==='monthly') renderMonthly();
+  else if(tab==='compare') renderCompare();
+  else if(tab==='contractors') renderContractors();
+  else if(tab==='phase') renderPhase();
+  else if(tab==='summary') renderSummary();
+  else if(tab==='mms') renderMms();
+  else if(tab==='returned') renderReturned();
+  else if(tab==='export') renderExport();
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function getAllRows(){
+  const rp=(state.replacement||[]).map(r=>({...r,_type:'Replacement'}));
+  const rg=(state.regularization||[]).map(r=>({...r,_type:'Regularization'}));
+  const ins=(state.installation||[]).map(r=>({...r,_type:'New Service'}));
+  return [...rp,...rg,...ins];
+}
+
+function filterByMonth(rows,key){
+  return rows.filter(r=>getMonthKey(r['DATE APPROVED'])===key);
+}
+
+function filterUpToMonth(rows,key){
+  return rows.filter(r=>{
+    const k=getMonthKey(r['DATE APPROVED']);
+    return k&&k<=key;
+  });
+}
+
+function countByType(rows){
+  return {
+    replacement:rows.filter(r=>r._type==='Replacement').length,
+    regularization:rows.filter(r=>r._type==='Regularization').length,
+    installation:rows.filter(r=>r._type==='New Service').length,
+    total:rows.length
+  };
+}
+
+function contractorName(code){return CONTRACTORS[code]||code;}
+function getOldMeter(r){
+  return r['OLD METER NUMBER']||r['Old Meter Number']||r['OLD METER NO']||r['Old Meter No']||r['OLD METER NO.']||r['Old Meter No.']||r['METER SERIAL NUMBER']||r['Old Meter Serial']||'';
+}
+function getSPN(r){
+  return (r['SERVICE POINT NUMBER']||r['Service Point Number']||'').trim();
+}
+
+function isMMS(r){
+  const old = getOldMeter(r).replace(/\s/g,'');
+  return old.startsWith('4400');
+}
+
+// ============================================================
+// TAB: OLD METERS RETURNED + OUTSTANDING
+// ============================================================
+function renderReturned(){
+  const el = document.getElementById('content');
+
+  if(!state.retReplacement && !state.retRegularization){
+    el.innerHTML=`
+    <div class="info-box warn-box"><b>No Returned Meter Files Loaded</b><br>
+    Upload the "Returned Replacement Meters" and/or "Returned Regularization Meters" CSV files using the upload section above to see this analysis.</div>
+    <div class="no-data"><b>UPLOAD RETURNED METER FILES</b>Use the green upload cards above</div>`;
+    return;
+  }
+
+  // --- Build SPN sets from returned files ---
+  const retRpSPNs = new Set((state.retReplacement||[]).map(r=>getSPN(r)).filter(Boolean));
+  const retRgSPNs = new Set((state.retRegularization||[]).map(r=>getSPN(r)).filter(Boolean));
+
+  // --- Main files: all completed jobs that require an old meter to be returned ---
+  const mainRp = (state.replacement||[]).map(r=>({...r,_type:'Replacement'}));
+  const mainRg = (state.regularization||[]).map(r=>({...r,_type:'Regularization'}));
+
+  // --- Totals from main files ---
+  const totalMainRp = mainRp.length;
+  const totalMainRg = mainRg.length;
+  const totalMain = totalMainRp + totalMainRg;
+
+  // --- Returned = main entries whose SPN IS in the returned files (matched) ---
+  const returnedRp = mainRp.filter(r=>retRpSPNs.has(getSPN(r)));
+  const returnedRg = mainRg.filter(r=>retRgSPNs.has(getSPN(r)));
+  const totalReturnedRp = returnedRp.length;
+  const totalReturnedRg = returnedRg.length;
+  const totalReturned = totalReturnedRp + totalReturnedRg;
+
+  // --- Outstanding = main entries whose SPN is NOT in the returned files ---
+  const outstandingRp = mainRp.filter(r=>!retRpSPNs.has(getSPN(r)));
+  const outstandingRg = mainRg.filter(r=>!retRgSPNs.has(getSPN(r)));
+  const allOutstanding = [
+    ...outstandingRp.map(r=>({...r,_otype:'Replacement'})),
+    ...outstandingRg.map(r=>({...r,_otype:'Regularization'}))
+  ];
+  const totalOutstandingRp = outstandingRp.length;
+  const totalOutstandingRg = outstandingRg.length;
+  const totalOutstanding = allOutstanding.length;
+
+  const returnedPct = totalMain>0?((totalReturned/totalMain)*100).toFixed(1):0;
+  const outstandingPct = totalMain>0?((totalOutstanding/totalMain)*100).toFixed(1):0;
+
+  // --- Per-contractor breakdown ---
+  // Get all contractor codes from main files
+  const allCodes = [...new Set([...mainRp,...mainRg].map(r=>(r['CONTRACTOR CODE']||'').trim()).filter(Boolean))].sort();
+
+  const contractorStats = allCodes.map(code=>{
+    const rpRows = mainRp.filter(r=>(r['CONTRACTOR CODE']||'').trim()===code);
+    const rgRows = mainRg.filter(r=>(r['CONTRACTOR CODE']||'').trim()===code);
+    const totalRp_ = rpRows.length;
+    const totalRg_ = rgRows.length;
+    const total = totalRp_ + totalRg_;
+
+    const retRp_ = rpRows.filter(r=>retRpSPNs.has(getSPN(r))).length;
+    const retRg_ = rgRows.filter(r=>retRgSPNs.has(getSPN(r))).length;
+    const returned = retRp_ + retRg_;
+
+    const outRp = rpRows.filter(r=>!retRpSPNs.has(getSPN(r)));
+    const outRg = rgRows.filter(r=>!retRgSPNs.has(getSPN(r)));
+    const outstanding = outRp.length + outRg.length;
+    const outstandingRows = [...outRp.map(r=>({...r,_otype:'Replacement'})),...outRg.map(r=>({...r,_otype:'Regularization'}))];
+
+    const retPct = total>0?((returned/total)*100).toFixed(1):0;
+    return {code,name:contractorName(code),totalRp:totalRp_,totalRg:totalRg_,total,returned,retRpCount:retRp_,retRgCount:retRg_,outstanding,outRpCount:outRp.length,outRgCount:outRg.length,retPct,outstandingRows};
+  }).filter(c=>c.total>0).sort((a,b)=>b.outstanding-a.outstanding);
+
+  // Selected contractor for download
+  const outstandingCodes = contractorStats.filter(c=>c.outstanding>0).map(c=>c.code);
+  const selDlCode = window._outDlCode || (outstandingCodes[0]||'ALL');
+  window._outDlCode = selDlCode;
+
+  // Store for download
+  window._outstandingData = allOutstanding;
+  window._contractorStats = contractorStats;
+
+  el.innerHTML = `
+  <!-- SUMMARY CARDS -->
+  <div class="section-header"><div class="section-title">Old Meters Return Status — Overall Summary</div><div class="section-line"></div></div>
+  <div class="cards">
+    <div class="card accent-border">
+      <div class="card-label">Total Old Meters Expected</div>
+      <div class="card-value">${totalMain.toLocaleString()}</div>
+      <div class="card-sub">All completed replacement + regularization jobs</div>
+    </div>
+    <div class="card orange-border">
+      <div class="card-label">Expected — Replacement</div>
+      <div class="card-value orange">${totalMainRp.toLocaleString()}</div>
+    </div>
+    <div class="card yellow-border">
+      <div class="card-label">Expected — Regularization</div>
+      <div class="card-value yellow">${totalMainRg.toLocaleString()}</div>
+    </div>
+    <div class="card green-border">
+      <div class="card-label">Already Returned</div>
+      <div class="card-value green">${totalReturned.toLocaleString()}</div>
+      <div class="card-sub">${returnedPct}% return rate</div>
+    </div>
+    <div class="card red-border">
+      <div class="card-label">Still Outstanding</div>
+      <div class="card-value red">${totalOutstanding.toLocaleString()}</div>
+      <div class="card-sub">${outstandingPct}% not yet returned</div>
+    </div>
+  </div>
+
+  <!-- Progress bars -->
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-label">Return Progress</div>
+    <div style="display:flex;gap:24px;margin-top:12px;flex-wrap:wrap">
+      <div style="flex:1;min-width:200px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="font-size:11px;color:var(--text3);font-family:var(--font-mono)">RETURNED</span>
+          <span style="font-size:13px;font-family:var(--font-mono);color:var(--success);font-weight:700">${returnedPct}%</span>
+        </div>
+        <div class="pct-bar" style="height:14px"><div class="pct-bar-fill green" style="width:${Math.min(returnedPct,100)}%;height:100%"></div></div>
+        <div style="font-size:10px;color:var(--text3);margin-top:4px;font-family:var(--font-mono)">${totalReturned.toLocaleString()} of ${totalMain.toLocaleString()} meters returned</div>
+      </div>
+      <div style="flex:1;min-width:200px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="font-size:11px;color:var(--text3);font-family:var(--font-mono)">OUTSTANDING</span>
+          <span style="font-size:13px;font-family:var(--font-mono);color:var(--danger);font-weight:700">${outstandingPct}%</span>
+        </div>
+        <div class="pct-bar" style="height:14px"><div class="pct-bar-fill red" style="width:${Math.min(outstandingPct,100)}%;height:100%"></div></div>
+        <div style="font-size:10px;color:var(--text3);margin-top:4px;font-family:var(--font-mono)">${totalOutstanding.toLocaleString()} meters still to be returned</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:24px;margin-top:16px;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--border)">
+      <div style="flex:1">
+        <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-bottom:6px">REPLACEMENT BREAKDOWN</div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span style="color:var(--text2)">Returned</span><span style="font-family:var(--font-mono);color:var(--success)">${totalReturnedRp.toLocaleString()} / ${totalMainRp.toLocaleString()}</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--text2)">Outstanding</span><span style="font-family:var(--font-mono);color:var(--danger)">${totalOutstandingRp.toLocaleString()}</span></div>
+      </div>
+      <div style="flex:1">
+        <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-bottom:6px">REGULARIZATION BREAKDOWN</div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span style="color:var(--text2)">Returned</span><span style="font-family:var(--font-mono);color:var(--success)">${totalReturnedRg.toLocaleString()} / ${totalMainRg.toLocaleString()}</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--text2)">Outstanding</span><span style="font-family:var(--font-mono);color:var(--danger)">${totalOutstandingRg.toLocaleString()}</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PER CONTRACTOR TABLE -->
+  <div class="section-header"><div class="section-title">Outstanding Old Meters by Contractor</div><div class="section-line"></div></div>
+  <div class="table-container" style="margin-bottom:24px">
+    <table>
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Contractor</th>
+          <th class="num">Total Jobs</th>
+          <th class="num">Returned (Repl.)</th>
+          <th class="num">Returned (Reg.)</th>
+          <th class="num">Total Returned</th>
+          <th class="num">Outstanding (Repl.)</th>
+          <th class="num">Outstanding (Reg.)</th>
+          <th class="num">Total Outstanding</th>
+          <th class="num">Return %</th>
+          <th>Download Outstanding</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${contractorStats.map(c=>{
+          const retColor = c.retPct>=90?'var(--success)':c.retPct>=70?'var(--warn)':'var(--danger)';
+          return `<tr>
+            <td class="mono">${c.code}</td>
+            <td style="font-size:12px">${c.name}</td>
+            <td class="num mono">${c.total}</td>
+            <td class="num mono" style="color:var(--success)">${c.retRpCount}</td>
+            <td class="num mono" style="color:var(--success)">${c.retRgCount}</td>
+            <td class="num mono" style="color:var(--success);font-weight:700">${c.returned}</td>
+            <td class="num mono" style="color:${c.outRpCount>0?'var(--accent3)':'var(--text3)'}">${c.outRpCount}</td>
+            <td class="num mono" style="color:${c.outRgCount>0?'var(--accent4)':'var(--text3)'}">${c.outRgCount}</td>
+            <td class="num mono" style="color:${c.outstanding>0?'var(--danger)':'var(--success)'};font-weight:700">${c.outstanding}</td>
+            <td class="num mono" style="color:${retColor};font-weight:700">${c.retPct}%</td>
+            <td>${c.outstanding>0?`<button class="btn-dl" style="padding:4px 10px;font-size:11px" onclick="downloadOutstanding('${c.code}')">⬇ Download</button>`:`<span style="color:var(--success);font-size:11px;font-family:var(--font-mono)">✓ All returned</span>`}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- DOWNLOAD ALL OUTSTANDING -->
+  ${totalOutstanding > 0 ? `
+  <div class="section-header"><div class="section-title">Download Outstanding Meters</div><div class="section-line"></div></div>
+  <div class="controls">
+    <select onchange="window._outDlCode=this.value;renderReturned()">
+      <option value="ALL"${selDlCode==='ALL'?' selected':''}>ALL CONTRACTORS — ${totalOutstanding} outstanding records</option>
+      ${contractorStats.filter(c=>c.outstanding>0).map(c=>`<option value="${c.code}"${c.code===selDlCode?' selected':''}>${c.code} — ${c.name.substring(0,28)} (${c.outstanding} outstanding)</option>`).join('')}
+    </select>
+    <button class="btn-dl" onclick="downloadOutstanding('${selDlCode}')">⬇ Download Outstanding CSV</button>
+  </div>
+
+  <!-- OUTSTANDING PREVIEW -->
+  <div class="section-header"><div class="section-title">Outstanding Records Preview — Full Main File Data</div><div class="section-line"></div></div>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Type</th>
+          <th>Code</th>
+          <th>Contractor</th>
+          <th>Service Order Code</th>
+          <th>Service Point No.</th>
+          <th>Customer Name</th>
+          <th>Customer Phone</th>
+          <th>Meter Phase</th>
+          <th>Old Meter No.</th>
+          <th>New Meter (COSEM)</th>
+          <th>District</th>
+          <th>Date Approved</th>
+          <th>Fault Type</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${allOutstanding.slice(0,200).map((r,i)=>`<tr>
+          <td class="mono">${i+1}</td>
+          <td><span class="badge ${r._otype==='Replacement'?'badge-orange':'badge-yellow'}">${r._otype}</span></td>
+          <td class="mono">${(r['CONTRACTOR CODE']||'').trim()}</td>
+          <td style="font-size:11px">${contractorName((r['CONTRACTOR CODE']||'').trim())}</td>
+          <td class="mono">${r['SERVICE ORDER CODE']||''}</td>
+          <td class="mono" style="color:var(--warn)">${getSPN(r)}</td>
+          <td style="font-size:12px">${r['CUSTOMER NAME']||''}</td>
+          <td class="mono">${r['CUSTOMER PHONE']||''}</td>
+          <td class="mono">${r['METER PHASE']||''}</td>
+          <td class="mono" style="color:var(--accent3)">${getOldMeter(r)}</td>
+          <td class="mono">${r['COSEM Logical Device Name']||''}</td>
+          <td class="mono">${r['DISTRICT CODE']||''}</td>
+          <td class="mono">${r['DATE APPROVED']||''}</td>
+          <td class="mono">${r['FAULT TYPE']||''}</td>
+        </tr>`).join('')}
+        ${allOutstanding.length>200?`<tr><td colspan="14" style="text-align:center;color:var(--text3);padding:12px;font-family:var(--font-mono)">... and ${allOutstanding.length-200} more rows — download CSV for the complete dataset</td></tr>`:''}
+      </tbody>
+    </table>
+  </div>
+  ` : `<div class="info-box success-box" style="margin-top:8px"><b>✓ All old meters have been returned!</b> Every completed replacement and regularization job has a corresponding returned meter on record.</div>`}
+  `;
+}
+
+function downloadOutstanding(code){
+  const stats = window._contractorStats || [];
+  let rows;
+  if(code==='ALL'){
+    rows = window._outstandingData || [];
+  } else {
+    const c = stats.find(s=>s.code===code);
+    rows = c ? c.outstandingRows : [];
+  }
+  if(!rows.length){alert('No outstanding records for this selection.');return;}
+
+  // Get ALL original column headers from the rows (exclude internal _type/_otype keys)
+  const allKeys = [];
+  const seen = new Set();
+  rows.forEach(r=>{
+    Object.keys(r).forEach(k=>{
+      if(!k.startsWith('_') && !seen.has(k)){seen.add(k);allKeys.push(k);}
+    });
+  });
+
+  // Prepend SN, SERVICE TYPE (outstanding type), CONTRACTOR NAME for clarity
+  const extraHeaders = ['SN','OUTSTANDING TYPE','CONTRACTOR NAME'];
+  const lines = [[ ...extraHeaders, ...allKeys ].join(',')];
+
+  rows.forEach((r,i)=>{
+    const extras = [
+      i+1,
+      `"${r._otype||r._type||''}"`,
+      `"${contractorName((r['CONTRACTOR CODE']||'').trim())}"`,
+    ];
+    const vals = allKeys.map(k=>{
+      const v = (r[k]||'').toString().replace(/"/g,"'");
+      return `"${v}"`;
+    });
+    lines.push([...extras,...vals].join(','));
+  });
+
+  const blob = new Blob([lines.join('\n')],{type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const fname = code==='ALL'
+    ? `ALL_CONTRACTORS_outstanding_old_meters.csv`
+    : `${code}_${contractorName(code).replace(/\s+/g,'_')}_outstanding_old_meters.csv`;
+  a.download = fname;
+  a.click();
+}
+
+// ============================================================
+// TAB 1: MONTHLY OVERVIEW
+// ============================================================
+function renderMonthly(){
+  const el = document.getElementById('content');
+  const allRows = getAllRows();
+  const monthData = {};
+  MONTHS.forEach(({key})=>{monthData[key]=countByType(filterByMonth(allRows,key));});
+  const activeMonths = MONTHS.filter(({key})=>monthData[key]&&monthData[key].total>0);
+  const selKey = window._selMonthKey || (activeMonths.length?activeMonths[activeMonths.length-1].key:MONTHS[MONTHS.length-1].key);
+  window._selMonthKey = selKey;
+  const selRows = filterByMonth(allRows, selKey);
+  const selCount = countByType(selRows);
+  const totAll = countByType(allRows);
+  el.innerHTML = `
+  <div class="section-header"><div class="section-title">All-Time Totals</div><div class="section-line"></div></div>
+  <div class="cards">
+    <div class="card accent-border"><div class="card-label">Total Installations</div><div class="card-value">${totAll.total.toLocaleString()}</div><div class="card-sub">All service types combined</div></div>
+    <div class="card blue-border"><div class="card-label">New Service</div><div class="card-value blue">${totAll.installation.toLocaleString()}</div></div>
+    <div class="card orange-border"><div class="card-label">Replacement</div><div class="card-value orange">${totAll.replacement.toLocaleString()}</div></div>
+    <div class="card yellow-border"><div class="card-label">Regularization</div><div class="card-value yellow">${totAll.regularization.toLocaleString()}</div></div>
+  </div>
+  <div class="section-header"><div class="section-title">Select Month</div><div class="section-line"></div></div>
+  <div class="month-grid">
+    ${MONTHS.map(({key})=>{const d=monthData[key]||{total:0};return `<div class="month-btn${key===selKey?' active':''}" onclick="selectMonth('${key}')"><div class="mb-label">${getMonthLabel(key)}</div><div class="mb-total">${d.total}</div><div class="mb-sub">installations</div></div>`;}).join('')}
+  </div>
+  <div class="section-header"><div class="section-title">Selected: ${getMonthLabel(selKey)}</div><div class="section-line"></div></div>
+  <div class="cards">
+    <div class="card accent-border"><div class="card-label">Total (${getMonthLabel(selKey)})</div><div class="card-value">${selCount.total.toLocaleString()}</div></div>
+    <div class="card blue-border"><div class="card-label">New Service</div><div class="card-value blue">${selCount.installation.toLocaleString()}</div></div>
+    <div class="card orange-border"><div class="card-label">Replacement</div><div class="card-value orange">${selCount.replacement.toLocaleString()}</div></div>
+    <div class="card yellow-border"><div class="card-label">Regularization</div><div class="card-value yellow">${selCount.regularization.toLocaleString()}</div></div>
+  </div>
+  <div class="section-header"><div class="section-title">Monthly Breakdown Chart</div><div class="section-line"></div></div>
+  ${renderBarChart(activeMonths,monthData)}
+  `;
+}
+
+function selectMonth(key){window._selMonthKey=key;renderMonthly();}
+
+function renderBarChart(months,data){
+  if(!months.length) return '<div class="no-data"><b>No data</b></div>';
+  const max=Math.max(...months.map(({key})=>data[key]?data[key].total:0),1);
+  return `<div class="bar-chart">${months.map(({key})=>{const d=data[key]||{total:0};const w=Math.round((d.total/max)*100);return `<div class="bar-row"><div class="bar-label">${getMonthLabel(key)}</div><div class="bar-track"><div class="bar-fill" style="width:${w}%;background:var(--accent)"></div></div><div class="bar-val">${d.total}</div></div>`;}).join('')}</div>`;
+}
+
+// ============================================================
+// TAB 2: COMPARE
+// ============================================================
+function renderCompare(){
+  const el=document.getElementById('content');
+  const allRows=getAllRows();
+  const activeMonths=MONTHS.filter(({key})=>filterByMonth(allRows,key).length>0);
+  const keys=activeMonths.map(m=>m.key);
+  const mA=window._cmpA||(keys.length>=2?keys[keys.length-2]:keys[0]||MONTHS[0].key);
+  const mB=window._cmpB||(keys.length>=1?keys[keys.length-1]:MONTHS[0].key);
+  const rowsA=filterByMonth(allRows,mA);
+  const rowsB=filterUpToMonth(allRows,mB);
+  const cA=countByType(rowsA);
+  const cB=countByType(rowsB);
+  el.innerHTML=`
+  <div class="info-box"><b>Note:</b> Month A shows installations for that month only. Month B shows cumulative totals up to end of that month.</div>
+  <div class="controls">
+    <select onchange="window._cmpA=this.value;renderCompare()">${keys.map(k=>`<option value="${k}"${k===mA?' selected':''}>${getMonthLabel(k)}</option>`).join('')}</select>
+    <span style="color:var(--text3);font-family:var(--font-mono)">VS</span>
+    <select onchange="window._cmpB=this.value;renderCompare()">${keys.map(k=>`<option value="${k}"${k===mB?' selected':''}>${getMonthLabel(k)}</option>`).join('')}</select>
+  </div>
+  <div class="compare-grid">
+    <div class="compare-card"><h4>${getMonthLabel(mA)} (Month Only)</h4>${cmpCard(cA,'accent')}</div>
+    <div class="compare-card"><h4>Cumulative up to ${getMonthLabel(mB)}</h4>${cmpCard(cB,'blue')}</div>
+  </div>
+  <div class="section-header"><div class="section-title">Side-by-Side by Service Type</div><div class="section-line"></div></div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Service Type</th><th class="num">${getMonthLabel(mA)}</th><th class="num">Cumul. to ${getMonthLabel(mB)}</th><th class="num">Difference</th></tr></thead>
+    <tbody>${[['New Service',cA.installation,cB.installation],['Replacement',cA.replacement,cB.replacement],['Regularization',cA.regularization,cB.regularization],['Total',cA.total,cB.total]].map(([lbl,a,b])=>`<tr><td>${lbl}</td><td class="num mono">${a.toLocaleString()}</td><td class="num mono">${b.toLocaleString()}</td><td class="num mono" style="color:${b-a>=0?'var(--accent)':'var(--danger)'}">${b-a>=0?'+':''}${(b-a).toLocaleString()}</td></tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+function cmpCard(c,color){
+  const col=color==='accent'?'var(--accent)':'var(--accent2)';
+  return `<div style="display:grid;gap:8px">${[['Total',c.total],['New Service',c.installation],['Replacement',c.replacement],['Regularization',c.regularization]].map(([l,v])=>`<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:6px"><span style="font-size:12px;color:var(--text2)">${l}</span><span style="font-family:var(--font-mono);font-size:16px;font-weight:700;color:${col}">${v.toLocaleString()}</span></div>`).join('')}</div>`;
+}
+
+// ============================================================
+// TAB 3: CONTRACTORS
+// ============================================================
+function renderContractors(){
+  const el=document.getElementById('content');
+  const allRows=getAllRows();
+  const activeMonths=MONTHS.filter(({key})=>filterByMonth(allRows,key).length>0);
+  const keys=activeMonths.map(m=>m.key);
+  const selKey=window._ctxMonth||(keys.length?keys[keys.length-1]:MONTHS[MONTHS.length-1].key);
+  function contractorMonthlyMap(rows){
+    const map={};
+    rows.forEach(r=>{const code=r['CONTRACTOR CODE'];if(!code||!CONTRACTORS[code]) return;const mk=getMonthKey(r['DATE APPROVED']);if(!mk) return;if(!map[code]) map[code]={code,name:contractorName(code),months:{}};if(!map[code].months[mk]) map[code].months[mk]=0;map[code].months[mk]++;});
+    return map;
+  }
+  const cMap=contractorMonthlyMap(allRows);
+  const selRows=filterByMonth(allRows,selKey);
+  const contractorSel={};
+  selRows.forEach(r=>{const code=r['CONTRACTOR CODE'];if(!code) return;if(!contractorSel[code]) contractorSel[code]={code,name:contractorName(code),total:0,ns:0,rp:0,rg:0};contractorSel[code].total++;if(r._type==='New Service') contractorSel[code].ns++;else if(r._type==='Replacement') contractorSel[code].rp++;else contractorSel[code].rg++;});
+  const selList=Object.values(contractorSel).filter(c=>c.total>0).sort((a,b)=>b.total-a.total);
+  function classify(code){const months=Object.entries(cMap[code]?.months||{}).sort((a,b)=>a[0]<b[0]?-1:1);if(months.length<2) return 'steady';const vals=months.map(m=>m[1]);const avg=vals.reduce((a,b)=>a+b,0)/vals.length;const last=vals[vals.length-1];if(last>avg*1.2) return 'highest';if(last<avg*0.8) return 'lowest';return 'steady';}
+  function recAssign(code){const months=Object.values(cMap[code]?.months||{});if(!months.length) return 0;const avg=months.reduce((a,b)=>a+b,0)/months.length;return Math.round(avg*1.1);}
+  const selOptions=keys.map(k=>`<option value="${k}"${k===selKey?' selected':''}>${getMonthLabel(k)}</option>`).join('');
+  el.innerHTML=`
+  <div class="controls"><label style="font-size:12px;color:var(--text3);font-family:var(--font-mono)">SELECT MONTH:</label><select onchange="window._ctxMonth=this.value;renderContractors()">${selOptions}</select></div>
+  <div class="section-header"><div class="section-title">Performance — ${getMonthLabel(selKey)}</div><div class="section-line"></div></div>
+  <div class="table-container"><table>
+    <thead><tr><th>Code</th><th>Contractor</th><th class="num">New Service</th><th class="num">Replacement</th><th class="num">Regularization</th><th class="num">Total</th><th>Status</th><th class="num">Recommended Assign</th></tr></thead>
+    <tbody>${selList.length?selList.map(c=>{const cls=classify(c.code);const bClass=cls==='highest'?'badge-green':cls==='lowest'?'badge-red':'badge-blue';const rec=recAssign(c.code);return `<tr><td class="mono">${c.code}</td><td>${c.name}</td><td class="num mono">${c.ns}</td><td class="num mono">${c.rp}</td><td class="num mono">${c.rg}</td><td class="num mono" style="font-weight:700;color:var(--accent)">${c.total}</td><td><span class="badge ${bClass}">${cls.toUpperCase()}</span></td><td class="num mono">${rec}</td></tr>`;}).join(''):'<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:20px">No data for this month</td></tr>'}</tbody>
+  </table></div>
+  <div class="section-header" style="margin-top:20px"><div class="section-title">All-Time Contractor Ranking</div><div class="section-line"></div></div>
+  ${renderAllTimeContractors(allRows)}`;
+}
+
+function renderAllTimeContractors(allRows){
+  const map={};allRows.forEach(r=>{const code=r['CONTRACTOR CODE'];if(!code||!CONTRACTORS[code]) return;if(!map[code]) map[code]={code,name:contractorName(code),total:0,ns:0,rp:0,rg:0};map[code].total++;if(r._type==='New Service') map[code].ns++;else if(r._type==='Replacement') map[code].rp++;else map[code].rg++;});
+  const list=Object.values(map).filter(c=>c.total>0).sort((a,b)=>b.total-a.total);
+  const maxT=list[0]?.total||1;
+  return `<div class="bar-chart">${list.map((c,i)=>{const w=Math.round((c.total/maxT)*100);const col=i===0?'var(--accent)':i===list.length-1?'var(--danger)':'var(--accent2)';return `<div class="bar-row"><div class="bar-label" title="${c.name}">${c.code} — ${c.name.substring(0,20)}${c.name.length>20?'...':''}</div><div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${col}"></div></div><div class="bar-val">${c.total}</div></div>`;}).join('')}</div>`;
+}
+
+// ============================================================
+// TAB 4: PHASE ANALYSIS
+// ============================================================
+function renderPhase(){
+  const el=document.getElementById('content');
+  const allRows=getAllRows();
+  const activeMonths=MONTHS.filter(({key})=>filterByMonth(allRows,key).length>0);
+  const keys=activeMonths.map(m=>m.key);
+  const selKey=window._phMonth||(keys.length?keys[keys.length-1]:MONTHS[MONTHS.length-1].key);
+  function phaseCount(rows){let sp=0,tp=0;rows.forEach(r=>{const mt=(r['Model Type']||'').trim().toUpperCase();if(mt==='DDSY-T02') sp++;else if(mt==='DTS353B') tp++;});return {sp,tp,total:sp+tp};}
+  const monthPhase=keys.map(k=>({key:k,...phaseCount(filterByMonth(allRows,k))}));
+  const selRows=filterByMonth(allRows,selKey);
+  const phByType={'New Service':phaseCount(selRows.filter(r=>r._type==='New Service')),'Replacement':phaseCount(selRows.filter(r=>r._type==='Replacement')),'Regularization':phaseCount(selRows.filter(r=>r._type==='Regularization'))};
+  const contMap={};selRows.forEach(r=>{const code=r['CONTRACTOR CODE'];if(!code||!CONTRACTORS[code]) return;if(!contMap[code]) contMap[code]={code,name:contractorName(code),sp:0,tp:0};const mt=(r['Model Type']||'').trim().toUpperCase();if(mt==='DDSY-T02') contMap[code].sp++;else if(mt==='DTS353B') contMap[code].tp++;});
+  const contList=Object.values(contMap).sort((a,b)=>(b.sp+b.tp)-(a.sp+a.tp));
+  const allPhase=phaseCount(allRows);const selPhase=phaseCount(selRows);
+  const byYear={};allRows.forEach(r=>{const d=parseDate(r['DATE APPROVED']);if(!d) return;const y=d.getFullYear();if(!byYear[y]) byYear[y]={sp:0,tp:0};const mt=(r['Model Type']||'').trim().toUpperCase();if(mt==='DDSY-T02') byYear[y].sp++;else if(mt==='DTS353B') byYear[y].tp++;});
+  const selOptions=keys.map(k=>`<option value="${k}"${k===selKey?' selected':''}>${getMonthLabel(k)}</option>`).join('');
+  el.innerHTML=`
+  <div class="cards">
+    <div class="card accent-border"><div class="card-label">All-Time Single Phase</div><div class="card-value">${allPhase.sp.toLocaleString()}</div><div class="card-sub">DDSY-T02</div></div>
+    <div class="card blue-border"><div class="card-label">All-Time Three Phase</div><div class="card-value blue">${allPhase.tp.toLocaleString()}</div><div class="card-sub">DTS353B</div></div>
+  </div>
+  <div class="section-header"><div class="section-title">By Year</div><div class="section-line"></div></div>
+  <div class="table-wrap"><table><thead><tr><th>Year</th><th class="num">Single Phase</th><th class="num">Three Phase</th><th class="num">Total</th></tr></thead><tbody>${Object.entries(byYear).sort().map(([y,d])=>`<tr><td class="mono">${y}</td><td class="num mono">${d.sp.toLocaleString()}</td><td class="num mono">${d.tp.toLocaleString()}</td><td class="num mono">${(d.sp+d.tp).toLocaleString()}</td></tr>`).join('')}</tbody></table></div>
+  <div class="controls" style="margin-top:18px"><label style="font-size:12px;color:var(--text3);font-family:var(--font-mono)">SELECT MONTH:</label><select onchange="window._phMonth=this.value;renderPhase()">${selOptions}</select></div>
+  <div class="section-header"><div class="section-title">${getMonthLabel(selKey)} — Phase by Service Type</div><div class="section-line"></div></div>
+  <div class="table-wrap"><table><thead><tr><th>Service Type</th><th class="num">Single Phase</th><th class="num">Three Phase</th><th class="num">Total</th></tr></thead><tbody>${Object.entries(phByType).map(([t,d])=>`<tr><td>${t}</td><td class="num mono">${d.sp}</td><td class="num mono">${d.tp}</td><td class="num mono">${d.total}</td></tr>`).join('')}<tr style="font-weight:700;border-top:2px solid var(--border)"><td>Total</td><td class="num mono" style="color:var(--accent)">${selPhase.sp}</td><td class="num mono" style="color:var(--accent2)">${selPhase.tp}</td><td class="num mono">${selPhase.total}</td></tr></tbody></table></div>
+  <div class="section-header" style="margin-top:16px"><div class="section-title">${getMonthLabel(selKey)} — Phase by Contractor</div><div class="section-line"></div></div>
+  <div class="table-container"><table><thead><tr><th>Code</th><th>Contractor</th><th class="num">Single Phase</th><th class="num">Three Phase</th><th class="num">Total</th></tr></thead><tbody>${contList.length?contList.map(c=>`<tr><td class="mono">${c.code}</td><td>${c.name}</td><td class="num mono">${c.sp}</td><td class="num mono">${c.tp}</td><td class="num mono" style="color:var(--accent)">${c.sp+c.tp}</td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px">No data</td></tr>'}</tbody></table></div>
+  <div class="section-header" style="margin-top:16px"><div class="section-title">Monthly Phase Trend</div><div class="section-line"></div></div>
+  <div class="table-wrap"><table><thead><tr><th>Month</th><th class="num">Single Phase</th><th class="num">Three Phase</th><th class="num">Total</th></tr></thead><tbody>${monthPhase.filter(m=>m.total>0).map(m=>`<tr><td class="mono">${getMonthLabel(m.key)}</td><td class="num mono">${m.sp}</td><td class="num mono">${m.tp}</td><td class="num mono">${m.total}</td></tr>`).join('')}</tbody></table></div>`;
+}
+
+// ============================================================
+// TAB 5: SUMMARY & TARGETS
+// ============================================================
+function renderSummary(){
+  const el=document.getElementById('content');
+  const allRows=getAllRows();
+  const activeMonths=MONTHS.filter(({key})=>filterByMonth(allRows,key).length>0);
+  const keys=activeMonths.map(m=>m.key);
+  const selKey=window._sumMonth||(keys.length?keys[keys.length-1]:MONTHS[MONTHS.length-1].key);
+  const cumulRows=filterUpToMonth(allRows,selKey);
+  const selRows=filterByMonth(allRows,selKey);
+  const cumTotal=cumulRows.length;const selTotal=selRows.length;
+  const selNS=selRows.filter(r=>r._type==='New Service').length;
+  const selFaulty=selRows.filter(r=>r._type==='Replacement'||r._type==='Regularization').length;
+  const selRp=selRows.filter(r=>r._type==='Replacement').length;
+  const selRg=selRows.filter(r=>r._type==='Regularization').length;
+  const nsRatePct=selTotal>0?((selNS/cumTotal)*100).toFixed(2):0;
+  const targetPct=((cumTotal/30000)*100).toFixed(2);
+  const insRows=selRows.filter(r=>r._type==='New Service');
+  let countExt=0,countSep=0;insRows.forEach(r=>{const it=(r['INSTALLATION TYPE']||'').trim().toLowerCase();if(it==='separate meter') countSep++;else countExt++;});
+  const selOptions=keys.map(k=>`<option value="${k}"${k===selKey?' selected':''}>${getMonthLabel(k)}</option>`).join('');
+  el.innerHTML=`
+  <div class="controls"><label style="font-size:12px;color:var(--text3);font-family:var(--font-mono)">SELECTED MONTH:</label><select onchange="window._sumMonth=this.value;renderSummary()">${selOptions}</select></div>
+  <div class="section-header"><div class="section-title">KPI Metrics — as of ${getMonthLabel(selKey)}</div><div class="section-line"></div></div>
+  <div class="cards">
+    <div class="card accent-border"><div class="card-label">Cumulative Installations</div><div class="card-value">${cumTotal.toLocaleString()}</div><div class="card-sub">Up to end of ${getMonthLabel(selKey)}</div></div>
+    <div class="card blue-border"><div class="card-label">New Service This Month</div><div class="card-value blue">${selNS.toLocaleString()}</div></div>
+    <div class="card orange-border"><div class="card-label">Faulty Meters This Month</div><div class="card-value orange">${selFaulty.toLocaleString()}</div><div class="card-sub">Replacement + Regularization</div></div>
+    <div class="card yellow-border"><div class="card-label">Total This Month</div><div class="card-value yellow">${selTotal.toLocaleString()}</div></div>
+  </div>
+  <div class="section-header"><div class="section-title">Key Ratios</div><div class="section-line"></div></div>
+  <div class="two-col">
+    <div class="card"><div class="card-label">New Service Rate</div><div class="card-value" style="font-size:20px">${nsRatePct}%</div><div class="card-sub">(New Service this month / Cumulative total) x 100</div><div class="pct-bar" style="margin-top:8px"><div class="pct-bar-fill" style="width:${Math.min(nsRatePct,100)}%"></div></div></div>
+    <div class="card"><div class="card-label">Faulty Breakdown</div><div style="display:grid;gap:6px;margin-top:8px"><div style="display:flex;justify-content:space-between"><span style="color:var(--text3);font-size:12px">Replacement</span><span class="mono" style="color:var(--accent3)">${selRp}</span></div><div style="display:flex;justify-content:space-between"><span style="color:var(--text3);font-size:12px">Regularization</span><span class="mono" style="color:var(--accent4)">${selRg}</span></div><div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:6px"><span style="color:var(--text);font-size:12px;font-weight:600">Total Faulty</span><span class="mono" style="color:var(--danger);font-weight:700">${selFaulty}</span></div></div></div>
+  </div>
+  <div class="section-header"><div class="section-title">Target Progress — 30,000 Meters</div><div class="section-line"></div></div>
+  <div class="card" style="margin-bottom:16px"><div class="card-label">Progress to 30,000 Target</div><div style="display:flex;align-items:center;gap:16px;margin-top:8px"><div style="font-size:28px;font-family:var(--font-mono);font-weight:700;color:var(--accent)">${targetPct}%</div><div style="flex:1"><div class="pct-bar" style="height:16px"><div class="pct-bar-fill" style="width:${Math.min(targetPct,100)}%;height:100%"></div></div><div style="font-size:11px;color:var(--text3);margin-top:4px;font-family:var(--font-mono)">${cumTotal.toLocaleString()} / 30,000</div></div></div></div>
+  <div class="section-header"><div class="section-title">New Service Installation Type Breakdown — ${getMonthLabel(selKey)}</div><div class="section-line"></div></div>
+  <div class="cards">
+    <div class="card blue-border"><div class="card-label">Straight / 1-Pole / 2-Pole Extension</div><div class="card-value blue">${countExt.toLocaleString()}</div></div>
+    <div class="card accent-border"><div class="card-label">Separate Meter</div><div class="card-value">${countSep.toLocaleString()}</div></div>
+    <div class="card"><div class="card-label">Total New Service</div><div class="card-value">${insRows.length.toLocaleString()}</div></div>
+  </div>`;
+}
+
+// ============================================================
+// TAB: MMS ANALYSIS
+// ============================================================
+function getMmsMonthly(allRows){const out={};MONTHS.forEach(({key})=>{const m=filterByMonth(allRows,key).filter(r=>r._type==='Replacement');out[key]=m.filter(r=>isMMS(r)).length;});return out;}
+function getMmsYearly(allRows){const out={};allRows.filter(r=>r._type==='Replacement').forEach(r=>{const d=parseDate(r['DATE APPROVED']);if(!d) return;const y=d.getFullYear();if(!out[y]) out[y]=0;if(isMMS(r)) out[y]++;});return out;}
+
+function renderMms(){
+  const el=document.getElementById('content');
+  const allRows=getAllRows();
+  const rpRows=allRows.filter(r=>r._type==='Replacement');
+  const mmsRows=rpRows.filter(r=>isMMS(r));
+  const totalMMS=mmsRows.length,totalAll=allRows.length,totalRp=rpRows.length;
+  const mmsPct=totalAll>0?((totalMMS/totalAll)*100).toFixed(2):0;
+  const mmsOfRpPct=totalRp>0?((totalMMS/totalRp)*100).toFixed(2):0;
+  const mmsMonthly=getMmsMonthly(allRows);
+  const activeMMSMonths=MONTHS.filter(({key})=>mmsMonthly[key]>0);
+  const activeMonths=MONTHS.filter(({key})=>filterByMonth(allRows,key).length>0);
+  const keys=activeMonths.map(m=>m.key);
+  const selKey=window._mmsMonth||(keys.length?keys[keys.length-1]:MONTHS[MONTHS.length-1].key);
+  window._mmsMonth=selKey;
+  const selMMS=mmsMonthly[selKey]||0;
+  const selRpTotal=filterByMonth(rpRows,selKey).length;
+  const selMmsPct=selRpTotal>0?((selMMS/selRpTotal)*100).toFixed(2):0;
+  const mmsYearly=getMmsYearly(allRows);
+  const rpYearly={};rpRows.forEach(r=>{const d=parseDate(r['DATE APPROVED']);if(!d) return;const y=d.getFullYear();rpYearly[y]=(rpYearly[y]||0)+1;});
+  const mmsContMap={};mmsRows.forEach(r=>{const code=r['CONTRACTOR CODE'];if(!code||!CONTRACTORS[code]) return;if(!mmsContMap[code]) mmsContMap[code]={code,name:contractorName(code),mms:0};mmsContMap[code].mms++;});
+  const mmsContList=Object.values(mmsContMap).sort((a,b)=>b.mms-a.mms);
+  const selOptions=keys.map(k=>`<option value="${k}"${k===selKey?' selected':''}>${getMonthLabel(k)}</option>`).join('');
+  const maxMMS=Math.max(...MONTHS.map(({key})=>mmsMonthly[key]||0),1);
+  el.innerHTML=`
+  <div class="section-header"><div class="section-title">MMS to MMS — All-Time Summary</div><div class="section-line"></div></div>
+  <div class="cards">
+    <div class="card accent-border"><div class="card-label">Total MMS Replacements</div><div class="card-value">${totalMMS.toLocaleString()}</div></div>
+    <div class="card orange-border"><div class="card-label">% of All Installations</div><div class="card-value orange">${mmsPct}%</div></div>
+    <div class="card yellow-border"><div class="card-label">% of All Replacements</div><div class="card-value yellow">${mmsOfRpPct}%</div></div>
+    <div class="card blue-border"><div class="card-label">Total Replacements</div><div class="card-value blue">${totalRp.toLocaleString()}</div></div>
+  </div>
+  <div class="card" style="margin-bottom:16px"><div class="card-label">MMS % of Total Installations</div><div style="display:flex;align-items:center;gap:16px;margin-top:10px"><div style="font-size:32px;font-family:var(--font-mono);font-weight:700;color:var(--accent)">${mmsPct}%</div><div style="flex:1"><div class="pct-bar" style="height:18px"><div class="pct-bar-fill" style="width:${Math.min(mmsPct,100)}%;height:100%"></div></div><div style="font-size:11px;color:var(--text3);margin-top:5px;font-family:var(--font-mono)">${totalMMS.toLocaleString()} MMS of ${totalAll.toLocaleString()} total</div></div></div></div>
+  <div class="section-header"><div class="section-title">Yearly Breakdown</div><div class="section-line"></div></div>
+  <div class="table-wrap"><table><thead><tr><th>Year</th><th class="num">MMS Replacements</th><th class="num">Total Replacements</th><th class="num">MMS % of Year</th></tr></thead><tbody>${Object.entries(mmsYearly).sort().map(([y,n])=>{const rpY=rpYearly[y]||0;const pY=rpY>0?((n/rpY)*100).toFixed(1):0;return `<tr><td class="mono">${y}</td><td class="num mono" style="color:var(--accent);font-weight:700">${n.toLocaleString()}</td><td class="num mono">${rpY.toLocaleString()}</td><td class="num mono" style="color:var(--accent4)">${pY}%</td></tr>`;}).join('')}<tr style="border-top:2px solid var(--border);font-weight:700"><td class="mono">TOTAL</td><td class="num mono" style="color:var(--accent)">${totalMMS.toLocaleString()}</td><td class="num mono">${totalRp.toLocaleString()}</td><td class="num mono" style="color:var(--accent4)">${mmsOfRpPct}%</td></tr></tbody></table></div>
+  <div class="section-header" style="margin-top:18px"><div class="section-title">Monthly Breakdown</div><div class="section-line"></div></div>
+  <div class="bar-chart" style="margin-bottom:20px">${activeMMSMonths.map(({key})=>{const n=mmsMonthly[key]||0;const w=((n/maxMMS)*100).toFixed(1);return `<div class="bar-row"><div class="bar-label">${getMonthLabel(key)}</div><div class="bar-track"><div class="bar-fill" style="width:${w}%;background:var(--accent)"></div></div><div class="bar-val">${n}</div></div>`;}).join('')}</div>
+  <div class="controls"><label style="font-size:12px;color:var(--text3);font-family:var(--font-mono)">SELECTED MONTH:</label><select onchange="window._mmsMonth=this.value;renderMms()">${selOptions}</select></div>
+  <div class="section-header"><div class="section-title">MMS Detail — ${getMonthLabel(selKey)}</div><div class="section-line"></div></div>
+  <div class="cards">
+    <div class="card accent-border"><div class="card-label">MMS Replacements</div><div class="card-value">${selMMS.toLocaleString()}</div></div>
+    <div class="card orange-border"><div class="card-label">Total Replacements</div><div class="card-value orange">${selRpTotal.toLocaleString()}</div></div>
+    <div class="card yellow-border"><div class="card-label">MMS % This Month</div><div class="card-value yellow">${selMmsPct}%</div></div>
+  </div>
+  <div class="section-header" style="margin-top:4px"><div class="section-title">Top Contractors — MMS (All Time)</div><div class="section-line"></div></div>
+  <div class="table-container"><table><thead><tr><th>Code</th><th>Contractor</th><th class="num">MMS Replacements</th></tr></thead><tbody>${mmsContList.length?mmsContList.map(c=>`<tr><td class="mono">${c.code}</td><td>${c.name}</td><td class="num mono" style="color:var(--accent);font-weight:700">${c.mms.toLocaleString()}</td></tr>`).join(''):'<tr><td colspan="3" style="text-align:center;color:var(--text3);padding:20px">No data</td></tr>'}</tbody></table></div>`;
+}
+
+// ============================================================
+// TAB: EXPORT
+// ============================================================
+function renderExport(){
+  const el=document.getElementById('content');
+  const allRows=getAllRows();
+  const contractorCodes=[...new Set(allRows.map(r=>r['CONTRACTOR CODE']).filter(c=>c&&CONTRACTORS[c]))].sort();
+  const selCode=window._expCode||contractorCodes[0]||'';
+  const selOptions=contractorCodes.map(c=>`<option value="${c}"${c===selCode?' selected':''}>${c} — ${contractorName(c)}</option>`).join('');
+  const cRows=selCode?allRows.filter(r=>r['CONTRACTOR CODE']===selCode):[];
+  el.innerHTML=`
+  <div class="section-header"><div class="section-title">Export Service Orders by Contractor</div><div class="section-line"></div></div>
+  <div class="info-box">Select a contractor and download all their completed service orders.</div>
+  <div class="controls">
+    <select onchange="window._expCode=this.value;renderExport()">${selOptions}</select>
+    <button class="btn-dl" onclick="downloadContractorCSV('${selCode}')">Download CSV — ${cRows.length} Records</button>
+  </div>
+  <div class="table-container"><table>
+    <thead><tr><th>SN</th><th>Type</th><th>Customer Name</th><th>Phone</th><th>Phase</th><th>Old Meter No.</th><th>Prepaid Meter</th></tr></thead>
+    <tbody>${cRows.slice(0,50).map((r,i)=>`<tr>
+      <td class="mono">${i+1}</td>
+      <td><span class="badge ${r._type==='New Service'?'badge-blue':r._type==='Replacement'?'badge-orange':'badge-yellow'}">${r._type}</span></td>
+      <td>${r['CUSTOMER NAME']||''}</td>
+      <td class="mono">${r['CUSTOMER PHONE']||''}</td>
+      <td class="mono">${r['METER PHASE']||''}</td>
+      <td class="mono">${r._type!=='New Service'?getOldMeter(r):'—'}</td>
+      <td class="mono">${r['COSEM Logical Device Name']||''}</td>
+    </tr>`).join('')}
+    ${cRows.length>50?`<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:12px;font-family:var(--font-mono)">... and ${cRows.length-50} more rows</td></tr>`:''}
+    ${!cRows.length?'<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:20px">No records found</td></tr>':''}
+    </tbody>
+  </table></div>`;
+}
+
+function downloadContractorCSV(code){
+  if(!code) return;
+  const allRows=getAllRows();
+  const cRows=allRows.filter(r=>r['CONTRACTOR CODE']===code);
+  const headers=['SN','SERVICE ORDER TYPE','CUSTOMER NAME','CUSTOMER PHONE','METER PHASE','OLD METER NUMBER','Prepaid Meter'];
+  const lines=[headers.join(',')];
+  cRows.forEach((r,i)=>{
+    const oldMeter=r._type!=='New Service'?getOldMeter(r):'';
+    lines.push([i+1,`"${r._type||''}"`,`"${(r['CUSTOMER NAME']||'').replace(/"/g,"'")}"`,`"${r['CUSTOMER PHONE']||''}"`,`"${r['METER PHASE']||''}"`,`"${oldMeter}"`,`"${r['COSEM Logical Device Name']||''}"`].join(','));
+  });
+  const blob=new Blob([lines.join('\n')],{type:'text/csv'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`${code}_${contractorName(code).replace(/\s+/g,'_')}_service_orders.csv`;
+  a.click();
+}
+
+// ============================================================
+// INIT
+// ============================================================
+renderTab('monthly');
+</script>
+</body>
+</html>
