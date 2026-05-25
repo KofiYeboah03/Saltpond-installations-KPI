@@ -195,6 +195,9 @@ tbody td.num{font-family:var(--font-mono);text-align:right}
       <div class="uc-status" id="uc-ret-regularization-status">Click to upload CSV</div>
     </div>
   </div>
+   <div style="margin-top:12px">
+    <button class="btn-dl" id="load-supabase-btn" onclick="loadFromSupabase()">⬇ Load Data from Supabase</button>
+  </div>
 </div>
 
 <div class="tabs">
@@ -1097,9 +1100,102 @@ function downloadContractorCSV(code){
 }
 
 // ============================================================
+// LOAD FROM SUPABASE
+// ============================================================
+async function fetchFromSupabase(table) {
+  let all = [];
+  let offset = 0;
+  const limit = 1000;
+  while (true) {
+    const res = await fetch(`${SUPABASE_URL}${table}?select=*&limit=${limit}&offset=${offset}`, {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      }
+    });
+    if (!res.ok) { console.error(`Supabase fetch error (${table}):`, await res.text()); break; }
+    const rows = await res.json();
+    if (!rows.length) break;
+    all = all.concat(rows);
+    if (rows.length < limit) break;
+    offset += limit;
+  }
+  return all;
+}
+
+function supabaseRowToCSVRow(r, type) {
+  // Map snake_case DB columns back to the UPPERCASE CSV keys the dashboard expects
+  const base = {
+    'SERVICE ORDER CODE':        r.service_order_code || '',
+    'SERVICE POINT NUMBER':      r.service_point_number || '',
+    'CONTRACTOR CODE':           r.contractor_code || '',
+    'CUSTOMER NAME':             r.customer_name || '',
+    'CUSTOMER PHONE':            r.customer_phone || '',
+    'METER PHASE':               r.meter_phase || '',
+    'Model Type':                r.model_type || '',
+    'COSEM Logical Device Name': r.cosem_logical_device_name || '',
+    'INSTALLATION TYPE':         r.installation_type || '',
+    'DISTRICT CODE':             r.district_code || '',
+    'DATE APPROVED':             r.date_approved || '',
+    'OLD METER NUMBER':          r.old_meter_number || '',
+    'FAULT TYPE':                r.fault_type || '',
+  };
+  return base;
+}
+
+async function loadFromSupabase() {
+  const btn = document.getElementById('load-supabase-btn');
+  if (btn) { btn.textContent = 'LOADING...'; btn.disabled = true; }
+
+  try {
+    const [rp, rg, ins, retRp, retRg] = await Promise.all([
+      fetchFromSupabase('replacement_orders'),
+      fetchFromSupabase('regularization_orders'),
+      fetchFromSupabase('installation_orders'),
+      fetchFromSupabase('returned_replacement_meters'),
+      fetchFromSupabase('returned_regularization_meters'),
+    ]);
+
+    state.replacement    = rp.map(r => supabaseRowToCSVRow(r, 'replacement'));
+    state.regularization = rg.map(r => supabaseRowToCSVRow(r, 'regularization'));
+    state.installation   = ins.map(r => supabaseRowToCSVRow(r, 'installation'));
+    state.retReplacement    = retRp.map(r => supabaseRowToCSVRow(r, 'retReplacement'));
+    state.retRegularization = retRg.map(r => supabaseRowToCSVRow(r, 'retRegularization'));
+
+    // Update upload card statuses
+    const updates = [
+      ['replacement',    rp.length],
+      ['regularization', rg.length],
+      ['installation',   ins.length],
+      ['ret-replacement',    retRp.length],
+      ['ret-regularization', retRg.length],
+    ];
+    updates.forEach(([id, count]) => {
+      const card = document.getElementById(`uc-${id}`);
+      const statusEl = document.getElementById(`uc-${id}-status`);
+      const isRet = id.startsWith('ret');
+      if (card) card.classList.add(isRet ? 'loaded-return' : 'loaded');
+      if (statusEl) {
+        statusEl.textContent = `${count} records (Supabase)`;
+        statusEl.className = 'uc-status ' + (isRet ? 'ok-ret' : 'ok');
+      }
+    });
+
+    updateHeader();
+    renderTab(currentTab);
+
+    if (btn) { btn.textContent = '✓ LOADED FROM SUPABASE'; btn.style.borderColor = 'var(--success)'; btn.style.color = 'var(--success)'; }
+  } catch (err) {
+    console.error('Supabase load error:', err);
+    if (btn) { btn.textContent = '✗ LOAD FAILED'; btn.disabled = false; }
+  }
+}
+
+// ============================================================
 // INIT
 // ============================================================
 renderTab('monthly');
+loadFromSupabase();
 </script>
 </body>
 </html>
