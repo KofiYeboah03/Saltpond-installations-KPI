@@ -318,7 +318,7 @@ function normalizeRowKeys(row) {
   map(['cosem_logical_device_name', 'cosem', 'logical_device_name', 'prepaid_meter', 'new_meter', 'new_meter_no', 'new_meter_serial'], 'cosem_logical_device_name');
   map(['installation_type', 'install_type'], 'installation_type');
   map(['district_code', 'district'], 'district_code');
-  map(['date_approved', 'date_returned', 'date_done', 'date'], 'date_approved');
+  map(['date_completed', 'date_returned', 'date_done', 'date'], 'date_completed');
   map(['old_meter_number', 'old_meter_no', 'old_meter', 'old_meter_serial', 'old_meter_serial_number', 'meter_serial_number'], 'old_meter_number');
   map(['fault_type', 'fault'], 'fault_type');
 
@@ -332,7 +332,7 @@ async function upsertToSupabase(table, rows) {
   if (!rows || !rows.length) return;
   const payload = rows.map(r => {
     const spn = (r['service_point_number'] || '').trim();
-    const rawDate = r['date_approved'] || r['date_returned'] || '';
+    const rawDate = r['date_completed'] || r['date_returned'] || '';
     const parsedDate = (() => {
       const d = parseDate(rawDate);
       if (!d) return null;
@@ -351,8 +351,8 @@ async function upsertToSupabase(table, rows) {
         cosem_logical_device_name: r['cosem_logical_device_name'] || '',
         installation_type:         r['installation_type'] || '',
         district_code:             r['district_code'] || '',
-        date_approved:             parsedDate,
-        raw_date_approved:         rawDate,
+        date_completed:             parsedDate,
+        raw_date_completed:         rawDate,
       };
     }
 
@@ -382,8 +382,8 @@ async function upsertToSupabase(table, rows) {
       fault_type:                r['fault_type']|| '',
       installation_type:         r['installation_type'] || '',
       district_code:             r['district_code'] || '',
-      date_approved:             parsedDate,
-      raw_date_approved:         rawDate,
+      date_completed:             parsedDate,
+      raw_date_completed:         rawDate,
     };
   });
 
@@ -607,12 +607,12 @@ function getAllRows(){
 }
 
 function filterByMonth(rows,key){
-  return rows.filter(r=>getMonthKey(r['date_approved'])===key);
+  return rows.filter(r=>getMonthKey(r['date_completed'])===key);
 }
 
 function filterUpToMonth(rows,key){
   return rows.filter(r=>{
-    const k=getMonthKey(r['date_approved']);
+    const k=getMonthKey(r['date_completed']);
     return k&&k<=key;
   });
 }
@@ -870,7 +870,7 @@ function renderReturned(){
           <td class="mono" style="color:var(--accent3)">${getOldMeter(r)}</td>
           <td class="mono">${r['cosem_logical_device_name']||''}</td>
           <td class="mono">${r['district_code']||''}</td>
-          <td class="mono">${r['date_approved']||''}</td>
+          <td class="mono">${r['date_completed']||''}</td>
           <td class="mono">${r['fault_type']||''}</td>
         </tr>`).join('')}
         ${allOutstanding.length>200?`<tr><td colspan="14" style="text-align:center;color:var(--text3);padding:12px;font-family:var(--font-mono)">... and ${allOutstanding.length-200} more rows — download CSV for the complete dataset</td></tr>`:''}
@@ -1020,7 +1020,7 @@ function renderContractors(){
   const selKey=window._ctxMonth||(keys.length?keys[keys.length-1]:MONTHS[MONTHS.length-1].key);
   function contractorMonthlyMap(rows){
     const map={};
-    rows.forEach(r=>{const code=r['contractor_code'];if(!code||!CONTRACTORS[code]) return;const mk=getMonthKey(r['date_approved']);if(!mk) return;if(!map[code]) map[code]={code,name:contractorName(code),months:{}};if(!map[code].months[mk]) map[code].months[mk]=0;map[code].months[mk]++;});
+    rows.forEach(r=>{const code=r['contractor_code'];if(!code||!CONTRACTORS[code]) return;const mk=getMonthKey(r['date_completed']);if(!mk) return;if(!map[code]) map[code]={code,name:contractorName(code),months:{}};if(!map[code].months[mk]) map[code].months[mk]=0;map[code].months[mk]++;});
     return map;
   }
   const cMap=contractorMonthlyMap(allRows);
@@ -1065,7 +1065,7 @@ function renderPhase(){
   const contMap={};selRows.forEach(r=>{const code=r['contractor_code'];if(!code||!CONTRACTORS[code]) return;if(!contMap[code]) contMap[code]={code,name:contractorName(code),sp:0,tp:0};const mt=(r['model_type']||'').trim().toUpperCase();if(mt==='DDSY-T02') contMap[code].sp++;else if(mt==='DTS353B') contMap[code].tp++;});
   const contList=Object.values(contMap).sort((a,b)=>(b.sp+b.tp)-(a.sp+a.tp));
   const allPhase=phaseCount(allRows);const selPhase=phaseCount(selRows);
-  const byYear={};allRows.forEach(r=>{const d=parseDate(r['date_approved']);if(!d) return;const y=d.getFullYear();if(!byYear[y]) byYear[y]={sp:0,tp:0};const mt=(r['model_type']||'').trim().toUpperCase();if(mt==='DDSY-T02') byYear[y].sp++;else if(mt==='DTS353B') byYear[y].tp++;});
+  const byYear={};allRows.forEach(r=>{const d=parseDate(r['date_completed']);if(!d) return;const y=d.getFullYear();if(!byYear[y]) byYear[y]={sp:0,tp:0};const mt=(r['model_type']||'').trim().toUpperCase();if(mt==='DDSY-T02') byYear[y].sp++;else if(mt==='DTS353B') byYear[y].tp++;});
   const selOptions=keys.map(k=>`<option value="${k}"${k===selKey?' selected':''}>${getMonthLabel(k)}</option>`).join('');
   el.innerHTML=`
   <div class="cards">
@@ -1132,7 +1132,7 @@ function renderSummary(){
 // TAB: MMS ANALYSIS
 // ============================================================
 function getMmsMonthly(allRows){const out={};MONTHS.forEach(({key})=>{const m=filterByMonth(allRows,key).filter(r=>r._type==='Replacement');out[key]=m.filter(r=>isMMS(r)).length;});return out;}
-function getMmsYearly(allRows){const out={};allRows.filter(r=>r._type==='Replacement').forEach(r=>{const d=parseDate(r['date_approved']);if(!d) return;const y=d.getFullYear();if(!out[y]) out[y]=0;if(isMMS(r)) out[y]++;});return out;}
+function getMmsYearly(allRows){const out={};allRows.filter(r=>r._type==='Replacement').forEach(r=>{const d=parseDate(r['date_completed']);if(!d) return;const y=d.getFullYear();if(!out[y]) out[y]=0;if(isMMS(r)) out[y]++;});return out;}
 
 function renderMms(){
   const el=document.getElementById('content');
@@ -1152,7 +1152,7 @@ function renderMms(){
   const selRpTotal=filterByMonth(rpRows,selKey).length;
   const selMmsPct=selRpTotal>0?((selMMS/selRpTotal)*100).toFixed(2):0;
   const mmsYearly=getMmsYearly(allRows);
-  const rpYearly={};rpRows.forEach(r=>{const d=parseDate(r['date_approved']);if(!d) return;const y=d.getFullYear();rpYearly[y]=(rpYearly[y]||0)+1;});
+  const rpYearly={};rpRows.forEach(r=>{const d=parseDate(r['date_completed']);if(!d) return;const y=d.getFullYear();rpYearly[y]=(rpYearly[y]||0)+1;});
   const mmsContMap={};mmsRows.forEach(r=>{const code=r['contractor_code'];if(!code||!CONTRACTORS[code]) return;if(!mmsContMap[code]) mmsContMap[code]={code,name:contractorName(code),mms:0};mmsContMap[code].mms++;});
   const mmsContList=Object.values(mmsContMap).sort((a,b)=>b.mms-a.mms);
   const selOptions=keys.map(k=>`<option value="${k}"${k===selKey?' selected':''}>${getMonthLabel(k)}</option>`).join('');
@@ -1268,7 +1268,7 @@ function supabaseRowToCSVRow(r, type) {
     cosem_logical_device_name: r.cosem_logical_device_name || '',
     installation_type:         r.installation_type || '',
     district_code:             r.district_code || '',
-    date_approved:             r.date_approved || '',
+    date_completed:             r.date_completed || '',
     old_meter_number:          r.old_meter_number || '',
     fault_type:                r.fault_type || '',
   };
