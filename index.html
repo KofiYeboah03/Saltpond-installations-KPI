@@ -1307,7 +1307,7 @@ async function loadFromSupabase(isAuto = false) {
       const isRet = id.startsWith('ret');
       if (card) card.classList.add(isRet ? 'loaded-return' : 'loaded');
       if (statusEl) {
-        statusEl.textContent = `${count} records (Supabase)`;
+        statusEl.textContent = `${count} records`;
         statusEl.className = 'uc-status ' + (isRet ? 'ok-ret' : 'ok');
       }
     });
@@ -1316,7 +1316,7 @@ async function loadFromSupabase(isAuto = false) {
     renderTab(currentTab);
 
     if (btn && !isAuto) { 
-      btn.textContent = '✓ LOADED FROM SUPABASE'; 
+      btn.textContent = 'LOADED'; 
       btn.style.borderColor = 'var(--success)'; 
       btn.style.color = 'var(--success)'; 
       btn.disabled = false;
