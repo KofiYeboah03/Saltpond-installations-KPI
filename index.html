@@ -363,9 +363,13 @@ function parseCSV(text){
 function parseDate(str){
   if(!str) return null;
   const clean = str.trim().split(' ')[0];
-  const m = clean.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if(!m) return null;
-  return new Date(+m[3],+m[2]-1,+m[1]);
+  // ISO format from Supabase: YYYY-MM-DD
+  const iso = clean.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(iso) return new Date(+iso[1],+iso[2]-1,+iso[3]);
+  // DD/MM/YYYY from CSV upload
+  const dmy = clean.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if(dmy) return new Date(+dmy[3],+dmy[2]-1,+dmy[1]);
+  return null;
 }
 
 function getMonthKey(dateStr){
@@ -1125,21 +1129,20 @@ async function fetchFromSupabase(table) {
 }
 
 function supabaseRowToCSVRow(r, type) {
-  // Map snake_case DB columns back to the UPPERCASE CSV keys the dashboard expects
   const base = {
-    'SERVICE ORDER CODE':        r.service_order_code || '',
-    'SERVICE POINT NUMBER':      r.service_point_number || '',
-    'CONTRACTOR CODE':           r.contractor_code || '',
-    'CUSTOMER NAME':             r.customer_name || '',
-    'CUSTOMER PHONE':            r.customer_phone || '',
-    'METER PHASE':               r.meter_phase || '',
-    'Model Type':                r.model_type || '',
-    'COSEM Logical Device Name': r.cosem_logical_device_name || '',
-    'INSTALLATION TYPE':         r.installation_type || '',
-    'DISTRICT CODE':             r.district_code || '',
-    'DATE APPROVED':             r.date_approved || '',
-    'OLD METER NUMBER':          r.old_meter_number || '',
-    'FAULT TYPE':                r.fault_type || '',
+    service_order_code:        r.service_order_code || '',
+    service_point_number:      r.service_point_number || '',
+    contractor_code:           r.contractor_code || '',
+    customer_name:             r.customer_name || '',
+    customer_phone:            r.customer_phone || '',
+    meter_phase:               r.meter_phase || '',
+    model_type:                r.model_type || '',
+    cosem_logical_device_name: r.cosem_logical_device_name || '',
+    installation_type:         r.installation_type || '',
+    district_code:             r.district_code || '',
+    date_approved:             r.date_approved || '',
+    old_meter_number:          r.old_meter_number || '',
+    fault_type:                r.fault_type || '',
   };
   return base;
 }
