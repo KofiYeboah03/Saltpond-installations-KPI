@@ -4,31 +4,54 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>SNEDA Installation KPI Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
 <style>
 :root{
   --bg:#0a0e17;--surface:#111827;--surface2:#1a2235;--surface3:#1f2d45;
   --accent:#ff6b35;--accent2:#0091ff;--accent3:#ffd166;--accent4:#a78bfa;
   --text:#e8edf5;--text2:#8899bb;--text3:#4a5a7a;
   --border:#1e2d4a;--danger:#ff4444;--warn:#ffaa00;--success:#22c55e;
-  --font-mono:'IBM Plex Mono',monospace;--font-sans:'IBM Plex Sans',sans-serif;
+  --font-mono:'IBM Plex Mono',monospace;--font-sans:'Outfit','IBM Plex Sans',sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-height:100vh;font-size:14px}
 .app{display:flex;flex-direction:column;min-height:100vh}
-header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100}
+header{
+  background:rgba(17, 24, 39, 0.85);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding:14px 24px;
+  display:flex;
+  align-items:center;
+  gap:16px;
+  position:sticky;
+  top:0;
+  z-index:100;
+}
 .logo{font-family:var(--font-mono);font-weight:700;font-size:15px;color:var(--accent);letter-spacing:.08em}
 .logo span{color:var(--text2);font-weight:400}
 .header-status{margin-left:auto;display:flex;align-items:center;gap:12px;font-size:12px;color:var(--text2);font-family:var(--font-mono)}
-.status-dot{width:7px;height:7px;border-radius:50%;background:var(--text3)}
-.status-dot.active{background:var(--accent);box-shadow:0 0 6px var(--accent)}
-.upload-section{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 24px}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--text3);transition:all 0.3s ease}
+.status-dot.active{background:var(--success);box-shadow:0 0 8px var(--success), 0 0 15px var(--success)}
+.upload-section{background:var(--surface);border-bottom:1px solid var(--border);padding:18px 24px}
 .upload-label{font-family:var(--font-mono);font-size:10px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
-.upload-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;max-width:1200px;margin-bottom:12px}
-.upload-card{background:var(--surface2);border:1.5px dashed var(--border);border-radius:8px;padding:14px 16px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
-.upload-card:hover{border-color:var(--accent);background:var(--surface3)}
-.upload-card.loaded{border-style:solid;border-color:var(--accent);background:rgba(255,107,53,.06)}
-.upload-card.loaded-return{border-style:solid;border-color:var(--success);background:rgba(34,197,94,.05)}
+.upload-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;max-width:1200px;margin-bottom:12px}
+.upload-card{
+  background:rgba(26, 34, 53, 0.6);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  border:1.5px dashed var(--border);
+  border-radius:10px;
+  padding:16px 18px;
+  cursor:pointer;
+  transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position:relative;
+  overflow:hidden;
+}
+.upload-card:hover{border-color:var(--accent);background:rgba(31, 45, 69, 0.8);transform:scale(1.02)}
+.upload-card.loaded{border-style:solid;border-color:var(--accent);background:rgba(255,107,53,.08);box-shadow:0 0 15px rgba(255, 107, 53, 0.15)}
+.upload-card.loaded-return{border-style:solid;border-color:var(--success);background:rgba(34,197,94,.06);box-shadow:0 0 15px rgba(34, 197, 94, 0.12)}
 .upload-card label{cursor:pointer;display:block}
 .upload-card input[type=file]{position:absolute;opacity:0;width:100%;height:100%;top:0;left:0;cursor:pointer}
 .uc-type{font-family:var(--font-mono);font-size:10px;color:var(--accent);font-weight:700;letter-spacing:.1em;margin-bottom:4px}
@@ -37,32 +60,59 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:1
 .uc-status{font-size:11px;color:var(--text3);font-family:var(--font-mono)}
 .uc-status.ok{color:var(--accent)}
 .uc-status.ok-ret{color:var(--success)}
-.tabs{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;gap:0;overflow-x:auto}
-.tab{padding:12px 20px;font-size:12px;font-family:var(--font-mono);font-weight:600;letter-spacing:.06em;color:var(--text3);border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;transition:all .2s;text-transform:uppercase}
-.tab:hover{color:var(--text2)}
-.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tabs{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{
+  padding:14px 20px;
+  font-size:12px;
+  font-family:var(--font-mono);
+  font-weight:600;
+  letter-spacing:.06em;
+  color:var(--text3);
+  border-bottom:3px solid transparent;
+  cursor:pointer;
+  white-space:nowrap;
+  transition:all 0.3s ease;
+  text-transform:uppercase;
+}
+.tab:hover{color:var(--text2);border-bottom-color:var(--border)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);text-shadow:0 0 10px rgba(255, 107, 53, 0.2)}
 .tab.new-tab{color:var(--success)}
-.tab.new-tab.active{color:var(--success);border-bottom-color:var(--success)}
+.tab.new-tab.active{color:var(--success);border-bottom-color:var(--success);text-shadow:0 0 10px rgba(34, 197, 94, 0.2)}
 .content{flex:1;padding:24px;overflow-x:auto}
 .no-data{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:260px;color:var(--text3);font-family:var(--font-mono);font-size:13px;gap:8px}
 .no-data b{font-size:15px;color:var(--text2)}
 
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:20px}
+.card{
+  background:rgba(17, 24, 39, 0.7);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  border:1px solid rgba(30, 45, 74, 0.6);
+  border-radius:12px;
+  padding:18px 20px;
+  box-shadow:0 4px 30px rgba(0, 0, 0, 0.2);
+  transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.card:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 30px rgba(255, 107, 53, 0.08);
+  border-color:rgba(255, 107, 53, 0.4);
+}
 .card-label{font-size:10px;font-family:var(--font-mono);color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
-.card-value{font-size:26px;font-family:var(--font-mono);font-weight:700;color:var(--accent)}
+.card-value{font-size:28px;font-family:var(--font-mono);font-weight:700;color:var(--accent)}
 .card-value.blue{color:var(--accent2)}
 .card-value.orange{color:var(--accent3)}
 .card-value.yellow{color:var(--accent4)}
 .card-value.green{color:var(--success)}
 .card-value.red{color:var(--danger)}
 .card-sub{font-size:11px;color:var(--text3);margin-top:3px}
-.card.accent-border{border-left:3px solid var(--accent)}
-.card.blue-border{border-left:3px solid var(--accent2)}
-.card.orange-border{border-left:3px solid var(--accent3)}
-.card.yellow-border{border-left:3px solid var(--accent4)}
-.card.green-border{border-left:3px solid var(--success)}
-.card.red-border{border-left:3px solid var(--danger)}
+.card.accent-border{border-left:4px solid var(--accent)}
+.card.blue-border{border-left:4px solid var(--accent2)}
+.card.orange-border{border-left:4px solid var(--accent3)}
+.card.yellow-border{border-left:4px solid var(--accent4)}
+.card.green-border{border-left:4px solid var(--success)}
+.card.red-border{border-left:4px solid var(--danger)}
 
 .section-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;margin-top:6px}
 .section-title{font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text2)}
@@ -145,6 +195,22 @@ tbody td.num{font-family:var(--font-mono);text-align:right}
 .filter-pill{background:var(--surface2);border:1px solid var(--border);color:var(--text3);padding:4px 12px;border-radius:20px;font-size:11px;font-family:var(--font-mono);cursor:pointer;transition:all .2s}
 .filter-pill:hover{border-color:var(--text3);color:var(--text2)}
 .filter-pill.active{background:rgba(255,107,53,.15);border-color:var(--accent);color:var(--accent)}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text3);
+}
 </style>
 </head>
 <body>
@@ -154,7 +220,7 @@ tbody td.num{font-family:var(--font-mono);text-align:right}
   <div class="logo">SNEDA <span>/ KPI DASHBOARD</span></div>
   <div class="header-status">
     <div class="status-dot" id="status-dot"></div>
-    <span id="status-text">NO FILES LOADED</span>
+    <span id="status-text">NO DATA LOADED</span>
   </div>
 </header>
 
@@ -216,20 +282,60 @@ tbody td.num{font-family:var(--font-mono);text-align:right}
 
 <script>
 // ============================================================
-// SUPABASE CONFIG — replace with your project values
+// SUPABASE CONFIG — verified & corrected API key
 // ============================================================
 const SUPABASE_URL = 'https://slxfmharltljcwrmdbgx.supabase.co/rest/v1/';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNseGZtaGFybHRsamN3cm1kYmd4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MTk0NDYsImV4cCI6MjA5NTI5NTQ0Nn0.bW2RjLdzgBKMWib5RYcbTw1bQJERuCzcWYRBgTv869M';
 
+// ============================================================
+// CSV HEADER NORMALIZATION LAYER (Handles arbitrary Synonyms/Casing)
+// ============================================================
+function normalizeRowKeys(row) {
+  const normalized = {};
+  for (let key in row) {
+    const cleanKey = key.toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_').replace(/^_+|_+$/g, '');
+    normalized[cleanKey] = row[key];
+  }
+  
+  const map = (possibleKeys, targetKey) => {
+    if (normalized[targetKey]) return;
+    for (let pk of possibleKeys) {
+      if (normalized[pk]) {
+        normalized[targetKey] = normalized[pk];
+        break;
+      }
+    }
+  };
+
+  map(['service_order_code', 'service_order_no', 'service_order', 'order_code', 'order_no', 'so_code', 'so_no'], 'service_order_code');
+  map(['service_point_number', 'service_point_no', 'service_point', 'spn'], 'service_point_number');
+  map(['contractor_code', 'contractor_no', 'contractor'], 'contractor_code');
+  map(['customer_name', 'client_name', 'name'], 'customer_name');
+  map(['customer_phone', 'customer_phone_no', 'phone', 'phone_number', 'phone_no'], 'customer_phone');
+  map(['meter_phase', 'phase'], 'meter_phase');
+  map(['model_type', 'model'], 'model_type');
+  map(['cosem_logical_device_name', 'cosem', 'logical_device_name', 'prepaid_meter', 'new_meter', 'new_meter_no', 'new_meter_serial'], 'cosem_logical_device_name');
+  map(['installation_type', 'install_type'], 'installation_type');
+  map(['district_code', 'district'], 'district_code');
+  map(['date_approved', 'date_returned', 'date_done', 'date'], 'date_approved');
+  map(['old_meter_number', 'old_meter_no', 'old_meter', 'old_meter_serial', 'old_meter_serial_number', 'meter_serial_number'], 'old_meter_number');
+  map(['fault_type', 'fault'], 'fault_type');
+
+  return normalized;
+}
+
+// ============================================================
+// SUPABASE WRITE (Uses Corrected Path without double API prefixes)
+// ============================================================
 async function upsertToSupabase(table, rows) {
   if (!rows || !rows.length) return;
   const payload = rows.map(r => {
-    const spn = (r['service_point_number'] || r['service_point_number'] || '').trim();
-    const rawDate = r['date_approved'] || r['date_approved'] || r['DATE RETURNED'] || '';
+    const spn = (r['service_point_number'] || '').trim();
+    const rawDate = r['date_approved'] || r['date_returned'] || '';
     const parsedDate = (() => {
-      const m = rawDate.match(/(\d{2})\/(\d{2})\/(\d{4})/);
-      if (!m) return null;
-      return `${m[3]}-${m[2]}-${m[1]}`;
+      const d = parseDate(rawDate);
+      if (!d) return null;
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     })();
 
     if (table === 'installation_orders') {
@@ -254,7 +360,7 @@ async function upsertToSupabase(table, rows) {
         service_point_number: spn,
         contractor_code:      (r['contractor_code'] || '').trim(),
         customer_name:        r['customer_name'] || '',
-        old_meter_number:     r['old_meter_number'] || r['old_meter_number'] || r['old_meter_number'] || '',
+        old_meter_number:     r['old_meter_number'] || '',
         district_code:        r['district_code'] || '',
         date_returned:        parsedDate,
         raw_date_returned:    rawDate,
@@ -270,7 +376,7 @@ async function upsertToSupabase(table, rows) {
       customer_phone:            r['customer_phone'] || '',
       meter_phase:               r['meter_phase'] || '',
       model_type:                (r['model_type'] || '').trim(),
-      old_meter_number:          r['old_meter_number'] || r['old_meter_number'] || r['old_meter_number'] || '',
+      old_meter_number:          r['old_meter_number'] || '',
       cosem_logical_device_name: r['cosem_logical_device_name'] || '',
       fault_type:                r['fault_type']|| '',
       installation_type:         r['installation_type'] || '',
@@ -284,7 +390,7 @@ async function upsertToSupabase(table, rows) {
   const BATCH = 500;
   for (let i = 0; i < payload.length; i += BATCH) {
     const batch = payload.slice(i, i + BATCH);
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+    const res = await fetch(`${SUPABASE_URL}${table}`, {
       method: 'POST',
       headers: {
         'apikey': SUPABASE_ANON_KEY,
@@ -297,6 +403,7 @@ async function upsertToSupabase(table, rows) {
     if (!res.ok) {
       const err = await res.text();
       console.error(`Supabase upload error (${table} batch ${i}):`, err);
+      throw new Error(`Supabase upload failed: ${err}`);
     }
   }
 }
@@ -360,16 +467,24 @@ function parseCSV(text){
   return rows;
 }
 
+// ============================================================
+// ROBUST DATE PARSER (Supports ISO, slash separators, and fallback standard date)
+// ============================================================
 function parseDate(str){
   if(!str) return null;
   const clean = str.trim().split(' ')[0];
-  // ISO format from Supabase: YYYY-MM-DD
-  const iso = clean.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if(iso) return new Date(+iso[1],+iso[2]-1,+iso[3]);
-  // DD/MM/YYYY from CSV upload
-  const dmy = clean.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if(dmy) return new Date(+dmy[3],+dmy[2]-1,+dmy[1]);
-  return null;
+  
+  // ISO format: YYYY-MM-DD or YYYY/MM/DD
+  const iso = clean.match(/^(\d{4})[-/](\d{2})[-/](\d{2})$/);
+  if(iso) return new Date(+iso[1], +iso[2] - 1, +iso[3]);
+  
+  // DD/MM/YYYY or DD-MM-YYYY
+  const dmy = clean.match(/^(\d{2})[-/](\d{2})[-/](\d{4})$/);
+  if(dmy) return new Date(+dmy[3], +dmy[2] - 1, +dmy[1]);
+  
+  // Standard JS parser as fallback
+  const d = new Date(str);
+  return isNaN(d.getTime()) ? null : d;
 }
 
 function getMonthKey(dateStr){
@@ -390,37 +505,52 @@ function handleFile(type, input){
   const file = input.files[0];
   if(!file) return;
   const reader = new FileReader();
-  reader.onload = e => {
-    const rows = parseCSV(e.target.result);
-    state[type] = rows;
-
-    // Map state key → Supabase table name
-    const TABLE_MAP = {
-      replacement:      'replacement_orders',
-      regularization:   'regularization_orders',
-      installation:     'installation_orders',
-      retReplacement:   'returned_replacement_meters',
-      retRegularization:'returned_regularization_meters',
-    };
-    const tableName = TABLE_MAP[type];
-    if (tableName) {
-      upsertToSupabase(tableName, rows)
-        .then(() => console.log(`✓ Uploaded ${rows.length} rows → ${tableName}`))
-        .catch(err => console.error('Supabase error:', err));
-    }
+  reader.onload = async e => {
     const isRet = type.startsWith('ret');
     const cardId = type==='retReplacement'?'ret-replacement':type==='retRegularization'?'ret-regularization':type;
     const card = document.getElementById(`uc-${cardId}`);
-    if(card){
-      card.classList.add(isRet?'loaded-return':'loaded');
-      const statusEl = document.getElementById(`uc-${cardId}-status`);
+    const statusEl = document.getElementById(`uc-${cardId}-status`);
+    
+    if(statusEl){
+      statusEl.textContent = 'Uploading to Supabase...';
+      statusEl.className = 'uc-status warn';
+    }
+    
+    try {
+      const rows = parseCSV(e.target.result).map(normalizeRowKeys);
+      const TABLE_MAP = {
+        replacement:      'replacement_orders',
+        regularization:   'regularization_orders',
+        installation:     'installation_orders',
+        retReplacement:   'returned_replacement_meters',
+        retRegularization:'returned_regularization_meters',
+      };
+      const tableName = TABLE_MAP[type];
+      
+      if (tableName) {
+        // Upload to Supabase and wait for completion!
+        await upsertToSupabase(tableName, rows);
+      }
+      
+      if(card){
+        card.classList.add(isRet?'loaded-return':'loaded');
+      }
       if(statusEl){
-        statusEl.textContent = `${rows.length} records loaded`;
+        statusEl.textContent = `✓ Uploaded ${rows.length} records`;
         statusEl.className = 'uc-status '+(isRet?'ok-ret':'ok');
       }
+      
+      // Load from Supabase to refresh analysis
+      await loadFromSupabase(true);
+      
+    } catch (err) {
+      console.error('Supabase upload error:', err);
+      if(statusEl){
+        statusEl.textContent = '✗ Upload failed';
+        statusEl.className = 'uc-status red';
+      }
+      alert('Failed to upload data to Supabase. Please check your network or database connection.');
     }
-    updateHeader();
-    renderTab(currentTab);
   };
   reader.readAsText(file);
 }
@@ -433,7 +563,7 @@ function updateHeader(){
   let msg = `${loaded}/3 CORE`;
   if(retLoaded>0) msg += ` | ${retLoaded}/2 RETURNED`;
   if(loaded===3){dot.classList.add('active');}else{dot.classList.remove('active');}
-  txt.textContent = loaded===3&&retLoaded===2?'ALL FILES LOADED':msg;
+  txt.textContent = loaded===3&&retLoaded===2?'ALL DATA LOADED':msg;
 }
 
 // ============================================================
@@ -452,7 +582,7 @@ function switchTab(tab){
 function renderTab(tab){
   const el = document.getElementById('content');
   if(!state.replacement&&!state.regularization&&!state.installation){
-    el.innerHTML=`<div class="no-data"><b>NO DATA LOADED</b>Upload CSV files to begin analysis</div>`;
+    el.innerHTML=`<div class="no-data"><b>NO DATA LOADED</b>Upload CSV files or click "Load Data from Supabase" to begin analysis</div>`;
     return;
   }
   if(tab==='monthly') renderMonthly();
@@ -497,10 +627,10 @@ function countByType(rows){
 
 function contractorName(code){return CONTRACTORS[code]||code;}
 function getOldMeter(r){
-  return r['old_meter_number']||r['old_meter_number']||r['old_meter_number']||r['old_meter_number']||r['OLD METER NO.']||r['Old Meter No.']||r['METER SERIAL NUMBER']||r['Old Meter Serial']||'';
+  return r['old_meter_number'] || '';
 }
 function getSPN(r){
-  return (r['service_point_number']||r['service_point_number']||'').trim();
+  return (r['service_point_number'] || '').trim();
 }
 
 function isMMS(r){
@@ -557,7 +687,6 @@ function renderReturned(){
   const outstandingPct = totalMain>0?((totalOutstanding/totalMain)*100).toFixed(1):0;
 
   // --- Per-contractor breakdown ---
-  // Get all contractor codes from main files
   const allCodes = [...new Set([...mainRp,...mainRg].map(r=>(r['contractor_code']||'').trim()).filter(Boolean))].sort();
 
   const contractorStats = allCodes.map(code=>{
@@ -762,7 +891,6 @@ function downloadOutstanding(code){
   }
   if(!rows.length){alert('No outstanding records for this selection.');return;}
 
-  // Get ALL original column headers from the rows (exclude internal _type/_otype keys)
   const allKeys = [];
   const seen = new Set();
   rows.forEach(r=>{
@@ -771,7 +899,6 @@ function downloadOutstanding(code){
     });
   });
 
-  // Prepend SN, SERVICE TYPE (outstanding type), CONTRACTOR NAME for clarity
   const extraHeaders = ['SN','OUTSTANDING TYPE','CONTRACTOR NAME'];
   const lines = [[ ...extraHeaders, ...allKeys ].join(',')];
 
@@ -1147,9 +1274,9 @@ function supabaseRowToCSVRow(r, type) {
   return base;
 }
 
-async function loadFromSupabase() {
+async function loadFromSupabase(isAuto = false) {
   const btn = document.getElementById('load-supabase-btn');
-  if (btn) { btn.textContent = 'LOADING...'; btn.disabled = true; }
+  if (btn && !isAuto) { btn.textContent = 'LOADING...'; btn.disabled = true; }
 
   try {
     const [rp, rg, ins, retRp, retRg] = await Promise.all([
@@ -1188,10 +1315,18 @@ async function loadFromSupabase() {
     updateHeader();
     renderTab(currentTab);
 
-    if (btn) { btn.textContent = '✓ LOADED FROM SUPABASE'; btn.style.borderColor = 'var(--success)'; btn.style.color = 'var(--success)'; }
+    if (btn && !isAuto) { 
+      btn.textContent = '✓ LOADED FROM SUPABASE'; 
+      btn.style.borderColor = 'var(--success)'; 
+      btn.style.color = 'var(--success)'; 
+      btn.disabled = false;
+    }
   } catch (err) {
     console.error('Supabase load error:', err);
-    if (btn) { btn.textContent = '✗ LOAD FAILED'; btn.disabled = false; }
+    if (btn && !isAuto) { 
+      btn.textContent = '✗ LOAD FAILED'; 
+      btn.disabled = false; 
+    }
   }
 }
 
