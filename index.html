@@ -281,6 +281,14 @@ tbody td.num{font-family:var(--font-mono);text-align:right}
 </div>
 
 <div class="content" id="content"></div>
+  <footer style="border-top:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;background:rgba(255,255,255,0.02)">
+  <div style="font-family:var(--font-mono);font-size:11px;color:var(--text3);letter-spacing:.08em">
+    CREATED &amp; MANAGED BY <span style="color:var(--accent);font-weight:700">FELIX NANA KOFI YEBOAH</span> <span style="color:var(--text3)">(MAJOR)</span>
+  </div>
+  <div style="font-family:var(--font-mono);font-size:10px;color:var(--text3);letter-spacing:.06em">
+    FIELD OPERATIONS OFFICER · SNEDA SMART METERS LIMITED
+  </div>
+</footer>
 </div>
 
 <script>
@@ -585,7 +593,7 @@ function switchTab(tab){
 function renderTab(tab){
   const el = document.getElementById('content');
   if(!state.replacement&&!state.regularization&&!state.installation){
-    el.innerHTML=`<div class="no-data"><b>NO DATA LOADED</b>Upload CSV files or click "Load Data from Supabase" to begin analysis</div>`;
+    el.innerHTML=`<div class="no-data"><b>DATA is LOADING PLEASE...</div>`;
     return;
   }
   if(tab==='monthly') renderMonthly();
