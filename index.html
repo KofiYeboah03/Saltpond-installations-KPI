@@ -230,9 +230,9 @@ tbody td.num{font-family:var(--font-mono);text-align:right}
 <div class="upload-section" id="upload-section">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
     <div class="upload-label" style="margin-bottom:0">▶ Core Service Data</div>
-    <button onclick="toggleUpload()" id="upload-toggle-btn" style="background:transparent;border:1px solid var(--border);color:var(--text3);padding:4px 12px;border-radius:5px;font-size:11px;font-family:var(--font-mono);cursor:pointer;letter-spacing:.08em">HIDE</button>
+    <button onclick="toggleUpload()" id="upload-toggle-btn" style="background:transparent;border:1px solid var(--border);color:var(--text3);padding:4px 12px;border-radius:5px;font-size:11px;font-family:var(--font-mono);cursor:pointer;letter-spacing:.08em">SHOW</button>
   </div>
-  <div id="upload-body">
+  <div id="upload-body" style="display:none">
   <div class="upload-grid">
     <div class="upload-card" id="uc-replacement">
       <input type="file" accept=".csv" id="file-replacement" onchange="handleFile('replacement',this)"/>
