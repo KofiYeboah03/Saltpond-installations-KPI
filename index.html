@@ -227,8 +227,12 @@ tbody td.num{font-family:var(--font-mono);text-align:right}
   </div>
 </header>
 
-<div class="upload-section">
-  <div class="upload-label">▶ Core Service Data</div>
+<div class="upload-section" id="upload-section">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <div class="upload-label" style="margin-bottom:0">▶ Core Service Data</div>
+    <button onclick="toggleUpload()" id="upload-toggle-btn" style="background:transparent;border:1px solid var(--border);color:var(--text3);padding:4px 12px;border-radius:5px;font-size:11px;font-family:var(--font-mono);cursor:pointer;letter-spacing:.08em">HIDE</button>
+  </div>
+  <div id="upload-body">
   <div class="upload-grid">
     <div class="upload-card" id="uc-replacement">
       <input type="file" accept=".csv" id="file-replacement" onchange="handleFile('replacement',this)"/>
@@ -261,6 +265,7 @@ tbody td.num{font-family:var(--font-mono);text-align:right}
   </div>
    <div style="margin-top:12px">
     <button class="btn-dl" id="load-supabase-btn" onclick="loadFromSupabase()">⬇ Load Data from Supabase</button>
+  </div>
   </div>
 </div>
 
@@ -1326,6 +1331,17 @@ async function loadFromSupabase(isAuto = false) {
       btn.disabled = false; 
     }
   }
+}
+
+// ============================================================
+// UPLOAD SECTION TOGGLE
+// ============================================================
+function toggleUpload(){
+  const body = document.getElementById('upload-body');
+  const btn = document.getElementById('upload-toggle-btn');
+  const isHidden = body.style.display === 'none';
+  body.style.display = isHidden ? '' : 'none';
+  btn.textContent = isHidden ? 'HIDE' : 'SHOW';
 }
 
 // ============================================================
