@@ -674,22 +674,6 @@ function isMMS(r){
   return old.startsWith('4400');
 }
 
-  function getMonthKey(dateStr) {
-  if (!dateStr) return '';
-  const parts = dateStr.split(' ')[0].split('/');
-  if (parts.length < 3) return '';
-  const month = parts[1];
-  const year = parts[2];
-  
-  const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-  const mIdx = parseInt(month, 10) - 1;
-  return (mIdx >= 0 && mIdx < 12) ? `${months[mIdx]} ${year}` : '';
-}
-
-function getMonthLabel(monthKey) {
-  return monthKey; 
-}
-
 // ============================================================
 // TAB: OLD METERS RETURNED + OUTSTANDING
 // ============================================================
