@@ -1345,49 +1345,57 @@ function downloadContractorExcel(code, monthKey) {
 
   const dashboardData = [
     [`SNEDA SMART METERS PERFORMANCE DASHBOARD`],
-    [`CONTRACTOR: ${cName} (${code})`],
+    [`CONTRACTOR: ${cName}`],
     [`REPORTING PERIOD: ${monthLabel}`],
     [], 
-    ["METRIC CATEGORY", "TOTAL JOBS EXECUTED"],
+    ["Service Order Type", "TOTAL JOBS EXECUTED"],
     ["Replacement Orders", replacementCount],
     ["Regularization Orders", regularizationCount],
     ["New Service (Without Separate Meter)", newServiceNoExtension],
     ["Separate Meter", separateMeterCount],
-    ["TOTAL KPI ASSIGNMENTS Done", totalKPI]
+    ["Total Jobs", totalKPI]
   ];
 
-  const wsDashboard = XLSX.utils.aoa_to_sheet(dashboardData);
+const wsDashboard = XLSX.utils.aoa_to_sheet(dashboardData);
 
-  // --- SHEET 2: EXCEL RECORD LOG SHEET ---
+  // --- SHARED HEADERS ---
   const jobsHeaders = [
-    "SN", "SERVICE TYPE", "SERVICE ORDER CODE", "SERVICE POINT NUMBER", 
-    "CUSTOMER NAME", "CUSTOMER PHONE", "METER PHASE", "MODEL TYPE", 
-    "OLD METER SERIAL", "NEW PREPAID METER Serial", "INSTALLATION TYPE", 
+    "SN", "SERVICE ORDER CODE", "SERVICE POINT NUMBER",
+    "CUSTOMER NAME", "CUSTOMER PHONE", "METER PHASE", "MODEL TYPE",
+    "OLD METER SERIAL", "NEW PREPAID METER SERIAL", "INSTALLATION TYPE",
     "DISTRICT", "DATE COMPLETED"
   ];
 
-  const jobsRows = filteredRows.map((r, index) => [
-    index + 1,
-    r._type || '',
-    r['service_order_code'] || '',
-    getSPN(r),
-    r['customer_name'] || '',
-    r['customer_phone'] || '',
-    r['meter_phase'] || '',
-    r['model_type'] || '',
-    r._type !== 'New Service' ? getOldMeter(r) : 'N/A',
-    r['cosem_logical_device_name'] || '',
-    r['installation_type'] || 'Standard',
-    r['district_code'] || '',
-    r['date_completed'] || ''
-  ]);
+  function buildSheet(rows) {
+    const data = rows.map((r, i) => [
+      i + 1,
+      r['service_order_code'] || '',
+      getSPN(r),
+      r['customer_name'] || '',
+      r['customer_phone'] || '',
+      r['meter_phase'] || '',
+      r['model_type'] || '',
+      (r._type !== 'New Service') ? getOldMeter(r) : 'N/A',
+      r['cosem_logical_device_name'] || '',
+      r['installation_type'] || 'Standard',
+      r['district_code'] || '',
+      r['date_completed'] || ''
+    ]);
+    return XLSX.utils.aoa_to_sheet([jobsHeaders, ...data]);
+  }
 
-  const wsJobs = XLSX.utils.aoa_to_sheet([jobsHeaders, ...jobsRows]);
+  const replacementRows    = filteredRows.filter(r => r._type === 'Replacement');
+  const regularizationRows = filteredRows.filter(r => r._type === 'Regularization');
+  const newServiceRows     = filteredRows.filter(r => r._type === 'New Service' && (r['installation_type'] || '').trim().toLowerCase() !== 'separate meter');
+  const separateMeterRows  = filteredRows.filter(r => r._type === 'New Service' && (r['installation_type'] || '').trim().toLowerCase() === 'separate meter');
 
-  // --- COMPILE BOOK STRUCTS ---
+  // --- COMPILE WORKBOOK ---
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, wsDashboard, "Dashboard");
-  XLSX.utils.book_append_sheet(wb, wsJobs, "Jobs");
+  XLSX.utils.book_append_sheet(wb, buildSheet(replacementRows),    "Replacement");
+  XLSX.utils.book_append_sheet(wb, buildSheet(regularizationRows), "Regularization");
+  XLSX.utils.book_append_sheet(wb, buildSheet(newServiceRows),     "New Service");
+  XLSX.utils.book_append_sheet(wb, buildSheet(separateMeterRows),  "Separate Meter");
 
   const cleanFname = `${code}_${cName.replace(/\s+/g, '_')}_${monthKey}.xlsx`;
   XLSX.writeFile(wb, cleanFname);
