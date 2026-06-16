@@ -6,7 +6,7 @@
 <title>SNEDA Installation KPI Dashboard</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='IBM Plex Mono,monospace' font-weight='700' font-size='56' fill='%23ff6b35'>S</text></svg>"/>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <style>
 :root{
   --bg:#0a0e17;--surface:#111827;--surface2:#1a2235;--surface3:#1f2d45;
@@ -1328,7 +1328,6 @@ function downloadContractorExcel(code, monthKey) {
   const totalKPI = replacementCount + regularizationCount + newServiceNoExtension + separateMeterCount;
 
   const dashboardData = [
-    [`SNEDA SMART METERS PERFORMANCE DASHBOARD`],
     [`CONTRACTOR: ${cName}`],
     [`REPORTING PERIOD: ${monthLabel}`],
     [], 
@@ -1342,11 +1341,19 @@ function downloadContractorExcel(code, monthKey) {
 
 const wsDashboard = XLSX.utils.aoa_to_sheet(dashboardData);
 
+  // Bold dashboard label cells (column A)
+  const dashRange = XLSX.utils.decode_range(wsDashboard['!ref']);
+  for (let R = dashRange.s.r; R <= dashRange.e.r; R++) {
+    const cellAddr = XLSX.utils.encode_cell({ r: R, c: 0 });
+    if (!wsDashboard[cellAddr]) continue;
+    wsDashboard[cellAddr].s = { font: { bold: true } };
+  }
+
   // --- SHARED HEADERS ---
   const jobsHeaders = [
     "SN", "SERVICE ORDER CODE", "SERVICE POINT NUMBER",
     "CUSTOMER NAME", "CUSTOMER PHONE", "METER PHASE", "MODEL TYPE",
-    "OLD METER SERIAL", "NEW PREPAID METER SERIAL", "INSTALLATION TYPE",
+    "OLD METER SERIAL", "NEW PREPAID METER", "INSTALLATION TYPE",
     "DISTRICT", "DATE COMPLETED"
   ];
 
@@ -1365,7 +1372,16 @@ const wsDashboard = XLSX.utils.aoa_to_sheet(dashboardData);
       r['district_code'] || '',
       r['date_completed'] || ''
     ]);
-    return XLSX.utils.aoa_to_sheet([jobsHeaders, ...data]);
+    const ws = XLSX.utils.aoa_to_sheet([jobsHeaders, ...data]);
+
+    // Bold all header cells in row 1
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    for (let C = range.s.c; C <= range.e.c; C++) {
+      const cellAddr = XLSX.utils.encode_cell({ r: 0, c: C });
+      if (!ws[cellAddr]) continue;
+      ws[cellAddr].s = { font: { bold: true } };
+    }
+    return ws;
   }
 
   const replacementRows    = filteredRows.filter(r => r._type === 'Replacement');
