@@ -1219,53 +1219,162 @@ function renderMms(){
 // TAB: EXPORT
 // ============================================================
 function renderExport(){
-  const el=document.getElementById('content');
-  const allRows=getAllRows();
-  const contractorCodes=[...new Set(allRows.map(r=>r['contractor_code']).filter(c=>c&&CONTRACTORS[c]))].sort();
-  const selCode=window._expCode||contractorCodes[0]||'';
-  const selOptions=contractorCodes.map(c=>`<option value="${c}"${c===selCode?' selected':''}>${c} — ${contractorName(c)}</option>`).join('');
-  const cRows=selCode?allRows.filter(r=>r['contractor_code']===selCode):[];
-  el.innerHTML=`
-  <div class="section-header"><div class="section-title">Export Service Orders by Contractor</div><div class="section-line"></div></div>
-  <div class="info-box">Select a contractor and download all their completed service orders.</div>
+  const el = document.getElementById('content');
+  const allRows = getAllRows();
+  
+  // Dynamic extraction of contractors and completion months
+  const contractorCodes = [...new Set(allRows.map(r => r['contractor_code']).filter(c => c && CONTRACTORS[c]))].sort();
+  const activeMonths = [...new Set(allRows.map(r => getMonthKey(r['date_completed'])).filter(Boolean))].sort();
+  
+  const selCode = window._expCode || contractorCodes[0] || '';
+  const selMonth = window._expMonth || (activeMonths.length ? activeMonths[activeMonths.length - 1] : '');
+  window._expCode = selCode;
+  window._expMonth = selMonth;
+
+  const contractorOptions = contractorCodes.map(c => `<option value="${c}"${c===selCode?' selected':''}>${c} — ${contractorName(c)}</option>`).join('');
+  const monthOptions = activeMonths.map(m => `<option value="${m}"${m===selMonth?' selected':''}>${getMonthLabel(m)}</option>`).join('');
+  
+  // Filter previews based on both criteria
+  const filteredRows = allRows.filter(r => 
+    r['contractor_code'] === selCode && 
+    getMonthKey(r['date_completed']) === selMonth
+  );
+
+  el.innerHTML = `
+  <div class="section-header"><div class="section-title">Excel Export System by Contractor</div><div class="section-line"></div></div>
+  <div class="info-box">Select a contractor and a target month to generate a 2-sheet formatted Excel workbook (<b>Dashboard</b> and <b>Jobs</b>) following the <b>Total Jobs_JACKSON.xlsx</b> format.</div>
+  
   <div class="controls">
-    <select onchange="window._expCode=this.value;renderExport()">${selOptions}</select>
-    <button class="btn-dl" onclick="downloadContractorCSV('${selCode}')">Download CSV — ${cRows.length} Records</button>
+    <label style="font-size:12px;color:var(--text3);font-family:var(--font-mono)">CONTRACTOR:</label>
+    <select onchange="window._expCode=this.value;renderExport()">${contractorOptions}</select>
+    
+    <label style="font-size:12px;color:var(--text3);font-family:var(--font-mono)">MONTH:</label>
+    <select onchange="window._expMonth=this.value;renderExport()">${monthOptions}</select>
+    
+    <button class="btn-dl" onclick="downloadContractorExcel('${selCode}', '${selMonth}')">⬇ Download Workbook (${filteredRows.length} Records)</button>
   </div>
-  <div class="table-container"><table>
-    <thead><tr><th>SN</th><th>Type</th><th>Customer Name</th><th>Phone</th><th>Phase</th><th>Old Meter No.</th><th>Prepaid Meter</th></tr></thead>
-    <tbody>${cRows.slice(0,50).map((r,i)=>`<tr>
-      <td class="mono">${i+1}</td>
-      <td><span class="badge ${r._type==='New Service'?'badge-blue':r._type==='Replacement'?'badge-orange':'badge-yellow'}">${r._type}</span></td>
-      <td>${r['customer_name']||''}</td>
-      <td class="mono">${r['customer_phone']||''}</td>
-      <td class="mono">${r['meter_phase']||''}</td>
-      <td class="mono">${r._type!=='New Service'?getOldMeter(r):'—'}</td>
-      <td class="mono">${r['cosem_logical_device_name']||''}</td>
-    </tr>`).join('')}
-    ${cRows.length>50?`<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:12px;font-family:var(--font-mono)">... and ${cRows.length-50} more rows</td></tr>`:''}
-    ${!cRows.length?'<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:20px">No records found</td></tr>':''}
-    </tbody>
-  </table></div>`;
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>SN</th>
+          <th>Type</th>
+          <th>Service Point No.</th>
+          <th>Customer Name</th>
+          <th>Phase</th>
+          <th>Old Meter No.</th>
+          <th>Prepaid Meter</th>
+          <th>Date Done</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${filteredRows.slice(0, 50).map((r, i) => `<tr>
+          <td class="mono">${i+1}</td>
+          <td><span class="badge ${r._type==='New Service'?'badge-blue':r._type==='Replacement'?'badge-orange':'badge-yellow'}">${r._type}</span></td>
+          <td class="mono">${getSPN(r)}</td>
+          <td>${r['customer_name']||''}</td>
+          <td class="mono">${r['meter_phase']||''}</td>
+          <td class="mono">${r._type!=='New Service'?getOldMeter(r):'—'}</td>
+          <td class="mono">${r['cosem_logical_device_name']||''}</td>
+          <td class="mono">${r['date_completed']||''}</td>
+        </tr>`).join('')}
+        ${filteredRows.length > 50 ? `<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:12px;font-family:var(--font-mono)">... and ${filteredRows.length-50} more rows showing in preview</td></tr>` : ''}
+        ${!filteredRows.length ? '<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:20px">No records found for this combination.</td></tr>' : ''}
+      </tbody>
+    </table>
+  </div>`;
 }
 
-function downloadContractorCSV(code){
-  if(!code) return;
-  const allRows=getAllRows();
-  const cRows=allRows.filter(r=>r['contractor_code']===code);
-  const headers=['SN','SERVICE ORDER TYPE','CUSTOMER NAME','CUSTOMER PHONE','METER PHASE','OLD METER NUMBER','Prepaid Meter'];
-  const lines=[headers.join(',')];
-  cRows.forEach((r,i)=>{
-    const oldMeter=r._type!=='New Service'?getOldMeter(r):'';
-    lines.push([i+1,`"${r._type||''}"`,`"${(r['customer_name']||'').replace(/"/g,"'")}"`,`"${r['customer_phone']||''}"`,`"${r['meter_phase']||''}"`,`"${oldMeter}"`,`"${r['cosem_logical_device_name']||''}"`].join(','));
+function downloadContractorExcel(code, monthKey) {
+  if (!code || !monthKey) return;
+  
+  const allRows = getAllRows();
+  const cName = contractorName(code);
+  const monthLabel = getMonthLabel(monthKey);
+
+  const filteredRows = allRows.filter(r => 
+    r['contractor_code'] === code && 
+    getMonthKey(r['date_completed']) === monthKey
+  );
+
+  if (!filteredRows.length) {
+    alert('No data found to export for the selected month.');
+    return;
+  }
+
+  // --- SHEET 1: COMPUTE DASHBOARD METRICS ---
+  let replacementCount = 0;
+  let regularizationCount = 0;
+  let newServiceNoExtension = 0; 
+  let separateMeterCount = 0;    
+
+  filteredRows.forEach(r => {
+    if (r._type === 'Replacement') {
+      replacementCount++;
+    } else if (r._type === 'Regularization') {
+      regularizationCount++;
+    } else if (r._type === 'New Service') {
+      const installType = (r['installation_type'] || '').trim().toLowerCase();
+      if (installType === 'separate meter') {
+        separateMeterCount++;
+      } else {
+        newServiceNoExtension++;
+      }
+    }
   });
-  const blob=new Blob([lines.join('\n')],{type:'text/csv'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download=`${code}_${contractorName(code).replace(/\s+/g,'_')}_service_orders.csv`;
-  a.click();
-}
 
+  const totalKPI = replacementCount + regularizationCount + newServiceNoExtension + separateMeterCount;
+
+  const dashboardData = [
+    [`SNEDA SMART METERS PERFORMANCE DASHBOARD`],
+    [`CONTRACTOR: ${cName} (${code})`],
+    [`REPORTING PERIOD: ${monthLabel}`],
+    [], 
+    ["METRIC CATEGORY", "TOTAL JOBS EXECUTED"],
+    ["Replacement Orders", replacementCount],
+    ["Regularization Orders", regularizationCount],
+    ["New Service (Without Separate Meter)", newServiceNoExtension],
+    ["Separate Meter", separateMeterCount],
+    ["TOTAL KPI ASSIGNMENTS Done", totalKPI]
+  ];
+
+  const wsDashboard = XLSX.utils.aoa_to_sheet(dashboardData);
+
+  // --- SHEET 2: EXCEL RECORD LOG SHEET ---
+  const jobsHeaders = [
+    "SN", "SERVICE TYPE", "SERVICE ORDER CODE", "SERVICE POINT NUMBER", 
+    "CUSTOMER NAME", "CUSTOMER PHONE", "METER PHASE", "MODEL TYPE", 
+    "OLD METER SERIAL", "NEW PREPAID METER Serial", "INSTALLATION TYPE", 
+    "DISTRICT", "DATE COMPLETED"
+  ];
+
+  const jobsRows = filteredRows.map((r, index) => [
+    index + 1,
+    r._type || '',
+    r['service_order_code'] || '',
+    getSPN(r),
+    r['customer_name'] || '',
+    r['customer_phone'] || '',
+    r['meter_phase'] || '',
+    r['model_type'] || '',
+    r._type !== 'New Service' ? getOldMeter(r) : 'N/A',
+    r['cosem_logical_device_name'] || '',
+    r['installation_type'] || 'Standard',
+    r['district_code'] || '',
+    r['date_completed'] || ''
+  ]);
+
+  const wsJobs = XLSX.utils.aoa_to_sheet([jobsHeaders, ...jobsRows]);
+
+  // --- COMPILE BOOK STRUCTS ---
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, wsDashboard, "Dashboard");
+  XLSX.utils.book_append_sheet(wb, wsJobs, "Jobs");
+
+  const cleanFname = `${code}_${cName.replace(/\s+/g, '_')}_${monthKey}.xlsx`;
+  XLSX.writeFile(wb, cleanFname);
+}
 // ============================================================
 // LOAD FROM SUPABASE
 // ============================================================
